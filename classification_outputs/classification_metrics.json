@@ -1,0 +1,87 @@
+{
+  "best_model_name": "Logistic Regression",
+  "split_counts": {
+    "train": 2800,
+    "validation": 600,
+    "test": 600
+  },
+  "all_models_test_comparison": [
+    {
+      "Model": "Logistic Regression",
+      "Accuracy": 0.85,
+      "Precision_Macro": 0.8509,
+      "Recall_Macro": 0.8586,
+      "F1_Macro": 0.854,
+      "At_Risk_Recall": 0.8861,
+      "At_Risk_Precision": 0.8589,
+      "At_Risk_F1": 0.8723,
+      "Composite_Score": 0.87005
+    },
+    {
+      "Model": "Support Vector Machine (SVM)",
+      "Accuracy": 0.8383,
+      "Precision_Macro": 0.8403,
+      "Recall_Macro": 0.8462,
+      "F1_Macro": 0.8427,
+      "At_Risk_Recall": 0.8671,
+      "At_Risk_Precision": 0.8562,
+      "At_Risk_F1": 0.8616,
+      "Composite_Score": 0.8549
+    },
+    {
+      "Model": "Random Forest Classifier",
+      "Accuracy": 0.8283,
+      "Precision_Macro": 0.8312,
+      "Recall_Macro": 0.8335,
+      "F1_Macro": 0.8317,
+      "At_Risk_Recall": 0.8228,
+      "At_Risk_Precision": 0.8497,
+      "At_Risk_F1": 0.836,
+      "Composite_Score": 0.82725
+    },
+    {
+      "Model": "XGBoost Classifier",
+      "Accuracy": 0.8283,
+      "Precision_Macro": 0.8326,
+      "Recall_Macro": 0.8328,
+      "F1_Macro": 0.8324,
+      "At_Risk_Recall": 0.8291,
+      "At_Risk_Precision": 0.8562,
+      "At_Risk_F1": 0.8424,
+      "Composite_Score": 0.83075
+    },
+    {
+      "Model": "CatBoost Classifier",
+      "Accuracy": 0.8317,
+      "Precision_Macro": 0.8364,
+      "Recall_Macro": 0.8354,
+      "F1_Macro": 0.8356,
+      "At_Risk_Recall": 0.8291,
+      "At_Risk_Precision": 0.8618,
+      "At_Risk_F1": 0.8452,
+      "Composite_Score": 0.8323499999999999
+    }
+  ],
+  "best_model_test_details": {
+    "Model": "Logistic Regression",
+    "Accuracy": 0.85,
+    "Precision_Macro": 0.8509,
+    "Recall_Macro": 0.8586,
+    "F1_Macro": 0.854,
+    "At_Risk_Recall": 0.8861,
+    "At_Risk_Precision": 0.8589,
+    "At_Risk_F1": 0.8723,
+    "Composite_Score": 0.87005
+  },
+  "eda_summary": {
+    "count": 4000,
+    "mean": 71.10777499999999,
+    "std": 16.74894963506203,
+    "min": 16.6,
+    "q25": 59.3,
+    "median": 71.55,
+    "q75": 83.5,
+    "max": 100.0,
+    "iqr": 24.200000000000003
+  }
+}
