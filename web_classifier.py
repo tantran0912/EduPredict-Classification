@@ -1,4 +1,4 @@
-F# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """
 EduPredict AI - Web Dashboard Khoa Học & Backend API Phân Lớp (Classification)
 File: web_classifier.py
