@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+F# -*- coding: utf-8 -*-
 """
 EduPredict AI - Web Dashboard Khoa Học & Backend API Phân Lớp (Classification)
 File: web_classifier.py
@@ -691,7 +691,6 @@ def index():
           <span class="pill pill-success">🟢 Logistic Regression (Balanced)</span>
           <span class="pill pill-primary">Test Accuracy: 85.0%</span>
           <span class="pill pill-primary">At-Risk Recall: 88.6%</span>
-          <a href="/docs" target="_blank" class="pill pill-link">Swagger Docs ↗</a>
         </div>
       </nav>
 
