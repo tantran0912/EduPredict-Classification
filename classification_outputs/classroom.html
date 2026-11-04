@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="vi">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EduPredict · Theo dõi lớp học</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #eff5f4; color: #152e35; font: 16px/1.55 system-ui, sans-serif; }
+  main { width: min(1050px, 94%); margin: 32px auto; }
+  header { background: #133c43; color: #fff; border-radius: 20px; padding: 32px; }
+  header a { color: #c5f7df; }
+  h1, h2, h3, p { margin: 0 0 12px; }
+  section { background: #fff; padding: 24px; margin: 18px 0; border-radius: 16px; }
+  form, .actions { display: flex; flex-wrap: wrap; gap: 14px; align-items: end; }
+  label { display: grid; gap: 4px; }
+  input, button { font: inherit; border: 1px solid #80999b; border-radius: 8px; padding: 8px; max-width: 100%; }
+  input[type=number] { width: 110px; }
+  button { background: #166550; color: white; cursor: pointer; border-color: #166550; }
+  button:disabled { opacity: .55; cursor: wait; }
+  .scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; text-align: left; }
+  th, td { border-bottom: 1px solid #dce8e6; padding: 9px; }
+  article { border-top: 1px solid #dce8e6; padding: 16px 0; }
+  [role=alert] { color: #9c2c26; white-space: pre-wrap; }
+</style>
+<main>
+  <header>
+    <p>EDUPREDICT · GIÁO VIÊN</p>
+    <h1>Hỗ trợ học sinh theo tuần</h1>
+    <p>Rà soát cả lớp, giao việc hỗ trợ và ghi lại tiến triển ở lần hẹn tiếp theo.</p>
+    <a href="/">Dự đoán từng học sinh</a>
+  </header>
+  <section>
+    <h2>1. Nhập danh sách và chọn số suất hỗ trợ</h2>
+    <p>Dùng CSV UTF-8, phân tách bằng dấu phẩy, tối đa 500 học sinh.</p>
+    <p><a id="sample" download="edupredict-lop-mau.csv">Tải CSV mẫu giả lập</a></p>
+    <form id="upload">
+      <label>Danh sách CSV<input name="file" type="file" accept=".csv,text/csv" required></label>
+      <label>Số suất<input name="slots" type="number" min="1" max="500" value="5" required></label>
+      <button>Rà soát danh sách</button>
+    </form>
+    <p id="summary" aria-live="polite"></p>
+    <div class="scroll">
+      <table id="ranking" hidden>
+        <thead><tr><th>Mã học sinh</th><th>Lớp</th><th>Dự báo dưới 60</th><th>Chuyên cần</th><th>Tự học/tuần</th><th>Hỗ trợ</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+  <section id="planPanel" hidden>
+    <h2>2. Giao việc hỗ trợ</h2>
+    <p id="selected"></p>
+    <form id="plan">
+      <label>Việc hỗ trợ<input name="action" maxlength="500" required placeholder="Trao đổi lý do vắng học"></label>
+      <label>Người phụ trách<input name="owner" maxlength="120" required></label>
+      <label>Ngày xem lại<input name="review_date" type="date" required></label>
+      <button>Lưu kế hoạch</button>
+    </form>
+  </section>
+  <section>
+    <h2>3. Lịch theo dõi</h2>
+    <p id="notice" aria-live="polite"></p>
+    <div id="plans"></div>
+  </section>
+</main>
+<script>
+  const find = selector => document.querySelector(selector);
+  const sample = [
+    "Student_ID,Class,Gender,HoursStudied/Week,Tutoring,Region,Attendance(%),Parent Education",
+    "HS01,10A1,Female,4,No,Urban,72,Secondary",
+    "HS02,10A1,Male,12,Yes,Rural,94,Primary",
+    "HS03,10A1,Female,7,No,Rural,81,Tertiary",
+  ].join("\r\n");
+  find("#sample").href = "data:text/csv;charset=utf-8," + encodeURIComponent(sample);
+  let selected;
+
+  function append(parent, tag, text) {
+    const node = document.createElement(tag);
+    if (text !== undefined) node.textContent = text;
+    parent.append(node);
+    return node;
+  }
+
+  async function api(path, method = "GET", body) {
+    const response = await fetch("/classroom/" + path, {
+      method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body)
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      const detail = result.detail || result.message;
+      throw new Error(typeof detail === "string" ? detail : "Vui lòng kiểm tra dữ liệu nhập.");
+    }
+    return result;
+  }
+
+  function submit(form, handler) {
+    const error = append(form.parentNode, "p");
+    error.setAttribute("role", "alert");
+    form.addEventListener("submit", async event => {
+      event.preventDefault();
+      const button = form.querySelector("button");
+      button.disabled = true;
+      error.textContent = "";
+      try {
+        await handler(Object.fromEntries(new FormData(form)));
+      } catch (problem) {
+        error.textContent = problem.message;
+      } finally {
+        button.disabled = false;
+      }
+    });
+  }
+
+  submit(find("#upload"), async ({ file, slots }) => {
+    if (file.size > 800000) throw new Error("Tệp quá lớn.");
+    const result = await api("rank", "POST", { csv_text: await file.text(), slots: Number(slots) });
+    const table = find("#ranking");
+    const rows = table.querySelector("tbody");
+    rows.replaceChildren();
+    find("#planPanel").hidden = true;
+    find("#summary").textContent = `Đang hiển thị ${result.priority.length}/${result.total} hồ sơ để giáo viên rà soát.`;
+    for (const student of result.priority) {
+      const row = append(rows, "tr");
+      for (const value of [student.student_id, student.class_name, (student.risk * 100).toFixed(1) + "%",
+        student.attendance + "%", student.hours + " giờ"]) append(row, "td", value);
+      const button = append(append(row, "td"), "button", "Giao việc");
+      button.onclick = () => {
+        selected = student;
+        find("#planPanel").hidden = false;
+        find("#selected").textContent = `${student.student_id} · ${student.class_name} · Chuyên cần ${student.attendance}%`;
+        find("#plan").reset();
+        find("#plan").elements.action.focus();
+      };
+    }
+    table.hidden = false;
+  });
+
+  submit(find("#plan"), async data => {
+    await api("plans", "POST", {
+      ...data, student_id: selected.student_id, class_name: selected.class_name,
+      baseline_attendance: selected.attendance
+    });
+    find("#planPanel").hidden = true;
+    find("#notice").textContent = "Đã lưu kế hoạch hỗ trợ.";
+    await loadPlans();
+  });
+
+  async function loadPlans() {
+    const plans = await api("plans");
+    const list = find("#plans");
+    list.replaceChildren();
+    if (!plans.length) append(list, "p", "Chưa có lịch theo dõi.");
+    for (const plan of plans) {
+      const card = append(list, "article");
+      append(card, "h3", `${plan.student_id} · ${plan.class_name}`);
+      append(card, "p", `${plan.action} · ${plan.owner} · Hẹn ${plan.review_date.split("-").reverse().join("/")}`);
+      if (plan.review_attendance !== null) {
+        append(card, "p", `Đã xem lại · Chuyên cần ${plan.baseline_attendance}% → ${plan.review_attendance}%`);
+        append(card, "p", plan.review_note);
+        continue;
+      }
+      append(card, "p", `Chờ xem lại · Chuyên cần ban đầu ${plan.baseline_attendance}%`);
+      const form = append(card, "form");
+      const attendance = append(append(form, "label", "Chuyên cần mới (%)"), "input");
+      Object.assign(attendance, { name: "attendance", type: "number", min: 0, max: 100, step: 0.1, required: true });
+      const note = append(append(form, "label", "Ghi chú theo dõi"), "input");
+      Object.assign(note, { name: "note", required: true, maxLength: 1000 });
+      append(form, "button", "Lưu kết quả");
+      submit(form, async data => {
+        await api(`plans/${plan.id}/review`, "PUT", { ...data, attendance: Number(data.attendance) });
+        find("#notice").textContent = "Đã lưu kết quả theo dõi.";
+        await loadPlans();
+      });
+    }
+  }
+
+  loadPlans().catch(error => { find("#notice").textContent = error.message; });
+</script>
+</html>
