@@ -68,12 +68,11 @@ load_local_env()
 
 # Danh sách model ưu tiên tốc độ phản hồi nhanh (2-4s) và tương thích cả AI Studio mới & cũ
 GEMINI_MODELS = [
-    "gemini-2.5-flash",
     "gemini-3.5-flash-lite",
     "gemini-3.1-flash-lite",
-    "gemini-2.0-flash",
-    "gemini-flash-latest",
     "gemini-3.5-flash",
+    "gemini-flash-latest",
+    "gemini-2.5-flash",
 ]
 
 CLASS_NAMES = ["Cần Hỗ Trợ (<60)", "Đạt Chuẩn (60-80)", "Xuất Sắc (>=80)"]
