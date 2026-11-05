@@ -66,13 +66,13 @@ def load_local_env() -> None:
 
 load_local_env()
 
-# Danh sách model ưu tiên tốc độ phản hồi nhanh (2-4s) và tương thích cả AI Studio mới & cũ
+# Danh sách model ưu tiên tốc độ phản hồi nhanh (1.5-3s) và tương thích hoàn toàn với khóa AQ. mới
 GEMINI_MODELS = [
+    "gemini-flash-lite-latest",
     "gemini-3.5-flash-lite",
     "gemini-3.1-flash-lite",
-    "gemini-3.5-flash",
-    "gemini-flash-latest",
-    "gemini-2.5-flash",
+    "gemini-3.8-flash",
+    "gemini-3-flash-preview",
 ]
 
 CLASS_NAMES = ["Cần Hỗ Trợ (<60)", "Đạt Chuẩn (60-80)", "Xuất Sắc (>=80)"]
@@ -391,10 +391,16 @@ def call_gemini_api(prompt: str, custom_key: Optional[str] = None) -> Tuple[Opti
                 },
             }
             try:
-                resp = requests.post(url, json=payload, timeout=28)
+                resp = requests.post(url, json=payload, timeout=18)
                 if resp.status_code == 200:
                     data = resp.json()
-                    text = data["candidates"][0]["content"]["parts"][0]["text"]
+                    parts = data["candidates"][0]["content"]["parts"]
+                    non_thought_texts = [
+                        p.get("text", "")
+                        for p in parts
+                        if p.get("text") and not p.get("thought", False)
+                    ]
+                    text = non_thought_texts[-1] if non_thought_texts else parts[-1].get("text", "")
                     return text.strip(), None
 
                 err_body = resp.text[:300]
