@@ -89,12 +89,35 @@ CLASS_DESC_VN = {
 }
 
 
-def resolve_gemini_key(client_key: Optional[str] = None) -> str:
-    """Ưu tiên khóa do người dùng cấu hình trên trình duyệt, sau đó tới biến môi trường / .env."""
-    if client_key and client_key.strip():
-        return client_key.strip()
+def parse_key_list(raw_str: str) -> List[str]:
+    """Tách chuỗi chứa 1 hoặc nhiều API key (ngăn cách bởi dấu phẩy, chấm phẩy hoặc xuống dòng)."""
+    if not raw_str:
+        return []
+    parts = re.split(r"[,;\r\n]+", raw_str)
+    keys: List[str] = []
+    for p in parts:
+        cleaned = p.strip().strip('"').strip("'")
+        if len(cleaned) >= 15 and cleaned not in keys:
+            keys.append(cleaned)
+    return keys
+
+
+def resolve_gemini_keys(client_key: Optional[str] = None) -> List[str]:
+    """
+    Hợp nhất danh sách khóa từ client (nếu có) và khóa cấu hình trên máy chủ (.env / Render Env).
+    Hỗ trợ nhiều khóa dự phòng (Auto-Failover): nếu khóa đầu lỗi/hết hạn mức sẽ tự động chuyển sang khóa kế tiếp.
+    """
     load_local_env()
-    return os.environ.get("GEMINI_API_KEY", "").strip()
+    combined: List[str] = []
+    for k in parse_key_list(client_key or "") + parse_key_list(os.environ.get("GEMINI_API_KEY", "")):
+        if k not in combined:
+            combined.append(k)
+    return combined
+
+
+def resolve_gemini_key(client_key: Optional[str] = None) -> str:
+    keys = resolve_gemini_keys(client_key)
+    return keys[0] if keys else ""
 
 
 class ModelBundle:
@@ -346,48 +369,51 @@ def generate_stakeholder_actions(record: Dict[str, Any], pred_code: int, phase: 
 
 def call_gemini_api(prompt: str, custom_key: Optional[str] = None) -> Tuple[Optional[str], Optional[str]]:
     """
-    Gọi Gemini API với cơ chế phát hiện nhanh lỗi khóa API (400/401/403).
+    Gọi Gemini API với cơ chế tự động xoay vòng nhiều khóa dự phòng (Multi-Key Failover).
+    Nếu khóa 1 gặp lỗi 401/403 hoặc quá tải 429, hệ thống tự động chuyển sang khóa dự phòng tiếp theo.
     Trả về: (text_json, error_reason)
     """
-    active_key = resolve_gemini_key(custom_key)
-    if not active_key:
+    candidate_keys = resolve_gemini_keys(custom_key)
+    if not candidate_keys:
         return None, "missing_key"
 
-    last_status = None
-    for model_name in GEMINI_MODELS:
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={active_key}"
-        payload = {
-            "contents": [{"parts": [{"text": prompt}]}],
-            "generationConfig": {
-                "temperature": 0.35,
-                "responseMimeType": "application/json",
-                "maxOutputTokens": 4096,
-            },
-        }
-        try:
-            resp = requests.post(url, json=payload, timeout=28)
-            last_status = resp.status_code
-            if resp.status_code == 200:
-                data = resp.json()
-                text = data["candidates"][0]["content"]["parts"][0]["text"]
-                return text.strip(), None
+    last_reason = "service_unavailable"
+    for active_key in candidate_keys:
+        key_invalid = False
+        for model_name in GEMINI_MODELS:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={active_key}"
+            payload = {
+                "contents": [{"parts": [{"text": prompt}]}],
+                "generationConfig": {
+                    "temperature": 0.35,
+                    "responseMimeType": "application/json",
+                    "maxOutputTokens": 4096,
+                },
+            }
+            try:
+                resp = requests.post(url, json=payload, timeout=28)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    text = data["candidates"][0]["content"]["parts"][0]["text"]
+                    return text.strip(), None
 
-            err_body = resp.text[:300]
-            logger.warning(f"Model {model_name} trả về {resp.status_code}: {err_body}")
+                err_body = resp.text[:300]
+                logger.warning(f"Model {model_name} (key {active_key[:6]}...) trả về {resp.status_code}: {err_body}")
 
-            # Nếu khóa không hợp lệ hoặc bị thu hồi (401 / 403 / API_KEY_INVALID), dừng ngay không thử lại vô ích
-            if resp.status_code in (401, 403) or "API_KEY_INVALID" in err_body or "API key not valid" in err_body:
-                return None, "invalid_key"
-            if resp.status_code == 429:
-                last_status = 429
+                if resp.status_code in (401, 403) or "API_KEY_INVALID" in err_body or "API key not valid" in err_body:
+                    last_reason = "invalid_key"
+                    key_invalid = True
+                    break  # Chuyển ngay sang khóa dự phòng tiếp theo (nếu có)
+                if resp.status_code == 429:
+                    last_reason = "quota_exceeded"
+                    continue
+            except Exception as exc:
+                logger.warning(f"Lỗi kết nối model {model_name}: {exc}")
                 continue
-        except Exception as exc:
-            logger.warning(f"Lỗi kết nối model {model_name}: {exc}")
+        if key_invalid:
             continue
 
-    if last_status == 429:
-        return None, "quota_exceeded"
-    return None, "service_unavailable"
+    return None, last_reason
 
 
 def gemini_error_message(reason: Optional[str]) -> str:
@@ -419,44 +445,46 @@ def health() -> Dict[str, Any]:
 
 @app.get("/api/key-status")
 def key_status() -> Dict[str, Any]:
-    key = resolve_gemini_key()
+    keys = resolve_gemini_keys()
     masked = ""
-    if len(key) > 10:
-        masked = f"{key[:6]}...{key[-4:]}"
-    return {"configured": bool(key), "masked": masked}
+    if keys and len(keys[0]) > 10:
+        masked = f"{keys[0][:6]}...{keys[0][-4:]}"
+    return {"configured": bool(keys), "key_count": len(keys), "masked": masked}
 
 
 @app.post("/api/verify-key")
 def verify_and_save_key(payload: ApiKeyInput, request: Request) -> JSONResponse:
-    candidate = payload.api_key.strip()
-    if not candidate or len(candidate) < 15:
+    candidates = parse_key_list(payload.api_key)
+    if not candidates:
         return JSONResponse(status_code=400, content={"status": "error", "message": "Khóa API không đúng định dạng."})
 
     test_prompt = 'Trả về JSON: {"ok": true}'
-    raw, err = call_gemini_api(test_prompt, custom_key=candidate)
+    joined_candidates = ",".join(candidates)
+    raw, err = call_gemini_api(test_prompt, custom_key=joined_candidates)
     if err is not None or not raw:
         return JSONResponse(
             status_code=400,
             content={"status": "error", "message": gemini_error_message(err or "invalid_key")},
         )
 
-    # Nếu đang chạy ở máy local (localhost / 127.0.0.1), lưu vào tệp .env (đã được .gitignore bảo vệ khỏi GitHub)
-    client_host = request.client.host if request.client else ""
-    saved_local = False
-    if client_host in ("127.0.0.1", "::1", "localhost"):
-        try:
-            os.environ["GEMINI_API_KEY"] = candidate
-            ENV_FILE_PATH.write_text(f"GEMINI_API_KEY={candidate}\n", encoding="utf-8")
-            saved_local = True
-        except Exception as exc:
-            logger.warning(f"Không thể lưu .env local: {exc}")
+    # Lưu trực tiếp vào bộ nhớ máy chủ (os.environ) và tệp .env để MỌI NGƯỜI DÙNG truy cập web đều dùng chung được ngay lập tức
+    # mà không cần sửa code hay deploy lại!
+    saved_server = False
+    try:
+        os.environ["GEMINI_API_KEY"] = joined_candidates
+        ENV_FILE_PATH.write_text(f"GEMINI_API_KEY={joined_candidates}\n", encoding="utf-8")
+        saved_server = True
+    except Exception as exc:
+        os.environ["GEMINI_API_KEY"] = joined_candidates
+        logger.warning(f"Đã cập nhật RAM máy chủ (không ghi được tệp .env): {exc}")
 
     return JSONResponse(
         content={
             "status": "success",
-            "saved_to_local_env": saved_local,
-            "masked": f"{candidate[:6]}...{candidate[-4:]}",
-            "message": "Xác thực khóa Gemini thành công! Trí tuệ nhân tạo đã sẵn sàng hoạt động.",
+            "saved_to_server": saved_server,
+            "key_count": len(candidates),
+            "masked": f"{candidates[0][:6]}...{candidates[0][-4:]}",
+            "message": f"Đã kích hoạt thành công {len(candidates)} khóa API cho toàn bộ máy chủ! Mọi người truy cập đều dùng được ngay mà không cần nhập lại.",
         }
     )
 

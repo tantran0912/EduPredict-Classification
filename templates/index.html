@@ -2121,26 +2121,31 @@
     <div class="modal-card">
       <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
         <div>
-          <h3 style="font-size: 17px; font-weight: 700;">Cấu hình khóa kết nối Gemini AI</h3>
-          <p style="font-size: 13px; color: var(--text-muted); margin-top: 3px;">Khóa được lưu riêng trên trình duyệt / tệp .env cá nhân, không lộ lên GitHub.</p>
+          <h3 style="font-size: 17px; font-weight: 700;">Cấu hình khóa Gemini AI cho toàn hệ thống</h3>
+          <p style="font-size: 13px; color: var(--text-muted); margin-top: 3px;">Áp dụng chung cho mọi người truy cập web — Cập nhật tức thời không cần deploy lại.</p>
         </div>
         <button type="button" class="ghost-link" onclick="closeApiKeyModal()">Đóng</button>
       </div>
 
       <div style="background: var(--primary-soft); border: 1px solid var(--primary-border); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 12.5px; color: var(--text-secondary); margin-bottom: 16px; line-height: 1.55;">
-        <strong>Lưu ý bảo mật:</strong> Google sẽ tự động khóa các API Key nếu phát hiện đẩy công khai lên GitHub. Hãy tạo khóa mới miễn phí tại <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="color: var(--primary); font-weight: 600;">aistudio.google.com/apikey</a> và dán vào dưới đây (hoặc đặt biến <code>GEMINI_API_KEY</code> trên Render).
+        <strong>Cơ chế hoạt động thông minh:</strong>
+        <ul style="margin-top: 6px; padding-left: 18px;">
+          <li>Khóa nhập tại đây (hoặc trong <code>GEMINI_API_KEY</code> trên Render) được lưu trên <strong>Máy chủ</strong>: <strong>mọi người khác vào web đều dùng được ngay</strong> mà không phải nhập gì.</li>
+          <li>Nếu khóa bị lỗi khi đã deploy, chỉ cần dán khóa mới vào đây là đổi xong trong 1 giây, <strong>không cần sửa code hay deploy lại</strong>.</li>
+          <li>Hỗ trợ dán <strong>nhiều khóa dự phòng</strong> (cách nhau bằng dấu phẩy <code>,</code>) tại <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="color: var(--primary); font-weight: 600;">aistudio.google.com/apikey</a> để tự động chuyển đổi.</li>
+        </ul>
       </div>
 
       <div class="field">
-        <label class="field-label" for="apiKeyInput">Google Gemini API Key</label>
-        <input type="password" id="apiKeyInput" placeholder="Dán khóa bắt đầu bằng AIzaSy...">
+        <label class="field-label" for="apiKeyInput">Google Gemini API Key (1 hoặc nhiều khóa cách nhau dấu phẩy)</label>
+        <input type="text" id="apiKeyInput" placeholder="VD: AIzaSyKey1..., AIzaSyKey2...">
       </div>
 
       <div id="apiKeyStatusMsg" class="hidden" style="font-size: 13px; margin-bottom: 14px; padding: 10px 12px; border-radius: 8px;"></div>
 
       <div style="display: flex; gap: 8px; justify-content: flex-end;">
-        <button type="button" class="btn-secondary" onclick="clearSavedApiKey()">Xóa khóa trình duyệt</button>
-        <button type="button" class="btn-primary" style="width: auto;" id="saveApiKeyBtn" onclick="saveAndVerifyApiKey()">Xác thực & Lưu khóa</button>
+        <button type="button" class="btn-secondary" onclick="clearSavedApiKey()">Xóa bộ nhớ trình duyệt</button>
+        <button type="button" class="btn-primary" style="width: auto;" id="saveApiKeyBtn" onclick="saveAndVerifyApiKey()">Xác thực & Kích hoạt cho toàn máy chủ</button>
       </div>
     </div>
   </div>
@@ -2247,7 +2252,7 @@
         msg.classList.remove('hidden');
       } finally {
         btn.disabled = false;
-        btn.textContent = 'Xác thực & Lưu khóa';
+        btn.textContent = 'Xác thực & Kích hoạt cho toàn máy chủ';
       }
     }
 
