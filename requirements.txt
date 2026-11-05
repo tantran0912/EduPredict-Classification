@@ -1,10 +1,9 @@
-
-fastapi
-uvicorn[standard]
+fastapi>=0.110.0
+uvicorn[standard]>=0.28.0
 numpy
 pandas
 scikit-learn
 joblib
-matplotlib
-xgboost
-catboost
+requests>=2.28.0
+pydantic>=2.0.0
+openpyxl>=3.1.0
