@@ -1,0 +1,2308 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EduPredict — Cảnh báo sớm & Lộ trình học phần</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #F8F9FB;
+      --surface: #FFFFFF;
+      --surface-subtle: #F3F4F6;
+      --border: #E5E7EB;
+      --border-strong: #D1D5DB;
+      --text: #111827;
+      --text-secondary: #4B5563;
+      --text-muted: #6B7280;
+      --accent: #111827;
+      --accent-hover: #1F2937;
+      --blue: #2563EB;
+      --blue-soft: #EFF6FF;
+      --danger: #DC2626;
+      --danger-bg: #FEF2F2;
+      --danger-border: #FECACA;
+      --warn: #D97706;
+      --warn-bg: #FFFBEB;
+      --warn-border: #FDE68A;
+      --success: #059669;
+      --success-bg: #ECFDF5;
+      --success-border: #A7F3D0;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
+      --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.05);
+      --shadow-md: 0 10px 30px rgba(15, 23, 42, 0.08);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+
+    .hidden { display: none !important; }
+
+    /* ==================== 1. ROLE GATE SCREEN ==================== */
+    .role-gate {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 20px;
+      background: radial-gradient(circle at 50% 0%, #EEF2FF 0%, var(--bg) 52%);
+    }
+
+    .gate-container {
+      width: 100%;
+      max-width: 720px;
+    }
+
+    .gate-brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .brand-mark {
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      background: var(--accent);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-name {
+      font-weight: 600;
+      font-size: 15px;
+      color: var(--text);
+      letter-spacing: -0.01em;
+    }
+
+    .gate-header {
+      margin-bottom: 32px;
+    }
+
+    .gate-header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .gate-header p {
+      font-size: 15px;
+      color: var(--text-muted);
+    }
+
+    .role-cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 640px) {
+      .role-cards { grid-template-columns: 1fr; }
+      .gate-header h1 { font-size: 23px; }
+    }
+
+    .role-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      text-align: left;
+      cursor: pointer;
+      transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 210px;
+      box-shadow: var(--shadow-xs);
+    }
+
+    .role-card:hover {
+      border-color: var(--text);
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+
+    .role-icon-wrap {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      background: var(--surface-subtle);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      transition: background 0.18s ease, color 0.18s ease;
+    }
+
+    .role-card:hover .role-icon-wrap {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .role-card h2 {
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 6px;
+      letter-spacing: -0.01em;
+    }
+
+    .role-card p {
+      font-size: 13.5px;
+      color: var(--text-muted);
+      line-height: 1.55;
+      margin-bottom: 20px;
+    }
+
+    .role-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .role-card:hover .role-action svg {
+      transform: translateX(3px);
+    }
+
+    .role-action svg {
+      transition: transform 0.18s ease;
+    }
+
+    /* ==================== 2. APP SHELL & TOPBAR ==================== */
+    .topbar {
+      height: 58px;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 40;
+    }
+
+    .topbar-inner {
+      max-width: 1180px;
+      height: 100%;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand-btn {
+      background: none;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      padding: 4px 0;
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .segmented {
+      display: inline-flex;
+      background: var(--surface-subtle);
+      padding: 3px;
+      border-radius: 9px;
+      border: 1px solid var(--border);
+    }
+
+    .seg-btn {
+      border: none;
+      background: transparent;
+      padding: 5px 13px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-family: inherit;
+    }
+
+    .seg-btn.active {
+      background: var(--surface);
+      color: var(--text);
+      font-weight: 600;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+    }
+
+    .ghost-link {
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-secondary);
+      font-size: 12.5px;
+      font-weight: 500;
+      padding: 6px 11px;
+      border-radius: 7px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s ease;
+    }
+
+    .ghost-link:hover {
+      border-color: var(--border-strong);
+      color: var(--text);
+    }
+
+    /* ==================== MAIN WORKSPACE ==================== */
+    .workspace {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 24px 64px;
+    }
+
+    .page-head {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .page-head h1 {
+      font-size: 21px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
+
+    .page-head p {
+      font-size: 13.5px;
+      color: var(--text-muted);
+      margin-top: 3px;
+    }
+
+    /* ==================== TWO-COLUMN LAYOUT ==================== */
+    .split-layout {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    @media (max-width: 960px) {
+      .split-layout { grid-template-columns: 1fr; }
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-xs);
+    }
+
+    .panel-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .panel-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .panel-body {
+      padding: 20px;
+    }
+
+    /* ==================== FORM ELEMENTS ==================== */
+    .field {
+      margin-bottom: 16px;
+    }
+
+    .field:last-child { margin-bottom: 0; }
+
+    .field-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+
+    .field-val {
+      font-weight: 600;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 13.5px;
+      font-family: inherit;
+      color: var(--text);
+      background: var(--surface);
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    input[type="text"]::placeholder,
+    textarea::placeholder {
+      color: #9CA3AF;
+    }
+
+    input[type="text"]:focus,
+    input[type="number"]:focus,
+    select:focus,
+    textarea:focus {
+      outline: none;
+      border-color: var(--text);
+      box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.06);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 78px;
+      line-height: 1.5;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      height: 5px;
+      accent-color: var(--accent);
+      cursor: pointer;
+      display: block;
+      margin-top: 4px;
+    }
+
+    .sample-chips {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .sample-chips span {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .chip-btn {
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text-secondary);
+      font-size: 12px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s ease;
+    }
+
+    .chip-btn:hover {
+      border-color: var(--text-secondary);
+      color: var(--text);
+      background: var(--surface);
+    }
+
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 18px 0;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    details.extra-options {
+      margin-top: 14px;
+      margin-bottom: 18px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      background: var(--bg);
+    }
+
+    details.extra-options summary {
+      font-size: 12.5px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .extra-body {
+      margin-top: 12px;
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 10px 16px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 13.5px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background 0.15s ease, opacity 0.15s ease;
+    }
+
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .btn-secondary {
+      padding: 8px 13px;
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 500;
+      font-family: inherit;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+      transition: all 0.15s ease;
+    }
+
+    .btn-secondary:hover {
+      background: var(--bg);
+      border-color: var(--border-strong);
+    }
+
+    /* ==================== EMPTY STATE ==================== */
+    .empty-panel {
+      background: var(--surface);
+      border: 1px dashed var(--border-strong);
+      border-radius: var(--radius);
+      padding: 64px 32px;
+      text-align: center;
+    }
+
+    .empty-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      background: var(--surface-subtle);
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 14px;
+    }
+
+    .empty-panel h3 {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .empty-panel p {
+      font-size: 13.5px;
+      color: var(--text-muted);
+      max-width: 420px;
+      margin: 0 auto;
+    }
+
+    /* ==================== RESULT SUMMARY CARD ==================== */
+    .summary-card {
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .status-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 4px 11px;
+      border-radius: 999px;
+      font-size: 12.5px;
+      font-weight: 600;
+      border: 1px solid transparent;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .pill-danger { background: var(--danger-bg); color: var(--danger); border-color: var(--danger-border); }
+    .pill-warn { background: var(--warn-bg); color: var(--warn); border-color: var(--warn-border); }
+    .pill-success { background: var(--success-bg); color: var(--success); border-color: var(--success-border); }
+
+    .status-desc {
+      font-size: 13.5px;
+      color: var(--text-secondary);
+      margin-top: 8px;
+    }
+
+    /* Segmented probability bar */
+    .stacked-bar {
+      height: 8px;
+      background: var(--surface-subtle);
+      border-radius: 999px;
+      overflow: hidden;
+      display: flex;
+      gap: 2px;
+      margin-bottom: 8px;
+    }
+
+    .seg-fill {
+      height: 100%;
+      transition: width 0.45s ease;
+    }
+
+    .prob-legend {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      font-size: 12.5px;
+      color: var(--text-muted);
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+    }
+
+    .whatif-strip {
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .whatif-summary {
+      font-size: 13px;
+      color: var(--text-secondary);
+      flex: 1;
+      min-width: 220px;
+    }
+
+    .whatif-drawer {
+      margin-top: 12px;
+      padding: 12px 14px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+    }
+
+    /* ==================== TABS FOR CONTENT ==================== */
+    .tab-bar {
+      display: flex;
+      gap: 4px;
+      padding: 0 20px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      border-radius: var(--radius) var(--radius) 0 0;
+    }
+
+    .tab-item {
+      border: none;
+      background: none;
+      padding: 13px 14px;
+      font-size: 13.5px;
+      font-weight: 500;
+      color: var(--text-muted);
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      font-family: inherit;
+      transition: color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .tab-item:hover { color: var(--text); }
+
+    .tab-item.active {
+      color: var(--text);
+      font-weight: 600;
+      border-bottom-color: var(--text);
+    }
+
+    .tab-pane {
+      padding: 22px 20px;
+    }
+
+    /* Topic & Theory typography */
+    .topic-heading {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 10px;
+      letter-spacing: -0.01em;
+    }
+
+    .theory-paragraph {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      white-space: pre-line;
+      margin-bottom: 18px;
+    }
+
+    .sub-label {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    .clean-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+
+    .clean-list li {
+      position: relative;
+      padding-left: 18px;
+      font-size: 13.5px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .clean-list li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 9px;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--text-muted);
+    }
+
+    /* Roadmap Timeline */
+    .roadmap-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .roadmap-step {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      background: var(--surface);
+    }
+
+    .roadmap-step-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+      flex-wrap: wrap;
+    }
+
+    .roadmap-stage {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .roadmap-duration {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--blue);
+      background: var(--blue-soft);
+      padding: 2px 9px;
+      border-radius: 999px;
+    }
+
+    .roadmap-focus {
+      font-size: 13.5px;
+      font-weight: 500;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .roadmap-action {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+
+    .method-note {
+      margin-top: 16px;
+      padding: 12px 14px;
+      background: var(--bg);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    /* Loading skeleton */
+    .ai-loading {
+      padding: 36px 20px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 13.5px;
+    }
+
+    .spinner {
+      width: 22px;
+      height: 22px;
+      border: 2px solid var(--border);
+      border-top-color: var(--text);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 0 auto 10px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* ==================== FACULTY WORKSPACE ==================== */
+    .upload-dropzone {
+      border: 1.5px dashed var(--border-strong);
+      border-radius: var(--radius);
+      background: var(--surface);
+      padding: 28px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+      transition: border-color 0.15s ease, background 0.15s ease;
+    }
+
+    .upload-dropzone.dragover {
+      border-color: var(--blue);
+      background: var(--blue-soft);
+    }
+
+    .dropzone-info {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .dropzone-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 9px;
+      background: var(--surface-subtle);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .dropzone-info h3 {
+      font-size: 14.5px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .dropzone-info p {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .dropzone-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .stat-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    @media (max-width: 768px) {
+      .stat-strip { grid-template-columns: 1fr 1fr; }
+    }
+
+    .stat-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 15px 18px;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    .stat-num {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-top: 4px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .table-toolbar {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .search-box {
+      width: 240px;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13.5px;
+    }
+
+    th {
+      text-align: left;
+      padding: 11px 16px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-secondary);
+      vertical-align: middle;
+    }
+
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: #FAFAFB; }
+
+    .td-name {
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    /* Slide-over drawer for student detail in Faculty view */
+    .drawer-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.35);
+      z-index: 60;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .drawer-panel {
+      width: 100%;
+      max-width: 500px;
+      background: var(--surface);
+      height: 100%;
+      overflow-y: auto;
+      padding: 24px;
+      box-shadow: -8px 0 30px rgba(15, 23, 42, 0.12);
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .drawer-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==================== MÀN HÌNH 0: CHỌN VAI TRÒ (LUÔN HIỆN ĐẦU TIÊN) ==================== -->
+  <section id="roleGateScreen" class="role-gate">
+    <div class="gate-container">
+      <div class="gate-brand">
+        <div class="brand-mark">EP</div>
+        <span class="brand-name">EduPredict</span>
+      </div>
+
+      <div class="gate-header">
+        <h1>Bạn sử dụng hệ thống với vai trò nào?</h1>
+        <p>Chọn không gian làm việc phù hợp để bắt đầu phân tích học tập hoặc quản lý lớp học.</p>
+      </div>
+
+      <div class="role-cards">
+        <!-- Lựa chọn Sinh viên -->
+        <button type="button" class="role-card" onclick="enterWorkspace('student')">
+          <div>
+            <div class="role-icon-wrap">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+                <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+              </svg>
+            </div>
+            <h2>Sinh viên</h2>
+            <p>Đánh giá mức độ an toàn học tập, giải đáp trọng tâm kiến thức đang vướng mắc và nhận lộ trình tự học phù hợp cho từng học phần.</p>
+          </div>
+          <span class="role-action">
+            Vào cổng sinh viên
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+          </span>
+        </button>
+
+        <!-- Lựa chọn Giảng viên -->
+        <button type="button" class="role-card" onclick="enterWorkspace('faculty')">
+          <div>
+            <div class="role-icon-wrap">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+            </div>
+            <h2>Giảng viên & Cố vấn</h2>
+            <p>Nhập thông tin đánh giá từng sinh viên hoặc tải tệp danh sách cả lớp (.CSV, .XLSX) để tự động sàng lọc sớm nhóm nguy cơ.</p>
+          </div>
+          <span class="role-action">
+            Vào cổng giảng viên
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+          </span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== KHUNG ỨNG DỤNG CHÍNH ==================== -->
+  <div id="appShell" class="hidden">
+    <header class="topbar">
+      <div class="topbar-inner">
+        <button type="button" class="brand-btn" onclick="showRoleGate()" title="Quay lại màn hình chọn vai trò">
+          <div class="brand-mark">EP</div>
+          <span class="brand-name">EduPredict</span>
+        </button>
+
+        <div class="topbar-right">
+          <div class="segmented">
+            <button type="button" class="seg-btn active" id="navBtnStudent" onclick="enterWorkspace('student')">Sinh viên</button>
+            <button type="button" class="seg-btn" id="navBtnFaculty" onclick="enterWorkspace('faculty')">Giảng viên</button>
+          </div>
+          <button type="button" class="ghost-link" onclick="showRoleGate()">Đổi vai trò</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- ==================== 1. GIAO DIỆN SINH VIÊN ==================== -->
+    <main id="studentWorkspace" class="workspace hidden">
+      <div class="page-head">
+        <div>
+          <h1>Tự đánh giá & Lộ trình học phần</h1>
+          <p>Nhập môn học, vấn đề đang gặp phải và quỹ thời gian thực tế để nhận phân tích trọng tâm.</p>
+        </div>
+      </div>
+
+      <div class="split-layout">
+        <!-- Cột trái: Form nhập liệu gọn gàng -->
+        <section class="panel">
+          <div class="panel-header">
+            <span class="panel-title">Thông tin học tập</span>
+            <button type="button" class="ghost-link" style="padding: 3px 9px; font-size: 12px;" onclick="clearStudentInputs()">Làm mới</button>
+          </div>
+          <div class="panel-body">
+            <form id="studentForm">
+              <div class="field">
+                <label class="field-label" for="stuSubject">Tên môn học / Học phần</label>
+                <input type="text" id="stuSubject" placeholder="VD: Giải tích 1, Cơ sở dữ liệu, Kinh tế vi mô...">
+              </div>
+
+              <div class="field">
+                <label class="field-label" for="stuQuestion">Lý thuyết hoặc nội dung đang vướng mắc</label>
+                <textarea id="stuQuestion" placeholder="Mô tả phần kiến thức, công thức hoặc dạng bài bạn chưa nắm rõ..."></textarea>
+                <div class="sample-chips">
+                  <span>Thử nhanh:</span>
+                  <button type="button" class="chip-btn" onclick="fillStudentExample('Giải tích 1', 'Chưa biết cách xét sự hội tụ của tích phân suy rộng loại 1')">Giải tích 1</button>
+                  <button type="button" class="chip-btn" onclick="fillStudentExample('Cơ sở dữ liệu', 'Phân biệt chuẩn 2NF, 3NF và cách tách bảng không mất thông tin')">Cơ sở dữ liệu</button>
+                  <button type="button" class="chip-btn" onclick="fillStudentExample('Kinh tế vi mô', 'Sự khác nhau giữa độ co giãn của cầu theo giá và độ dốc đường cầu')">Kinh tế vi mô</button>
+                </div>
+              </div>
+
+              <div class="divider"></div>
+
+              <div class="field">
+                <label class="field-label" for="stuPhase">Thời điểm trong học kỳ</label>
+                <select id="stuPhase">
+                  <option value="early">Đầu kỳ (Tuần 1 – 4)</option>
+                  <option value="midterm" selected>Giữa kỳ (Tuần 5 – 9)</option>
+                  <option value="final">Ôn thi cuối kỳ (Tuần 10+)</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <div class="field-label">
+                  <span>Thời gian tự học ngoài giờ lên lớp</span>
+                  <span class="field-val" id="stuHoursLabel">5.0 giờ/tuần</span>
+                </div>
+                <input type="range" id="stuHours" min="0" max="16" step="0.5" value="5.0" oninput="document.getElementById('stuHoursLabel').textContent = parseFloat(this.value).toFixed(1) + ' giờ/tuần'">
+              </div>
+
+              <div class="field">
+                <div class="field-label">
+                  <span>Tỷ lệ chuyên cần đến lớp</span>
+                  <span class="field-val" id="stuAttLabel">72%</span>
+                </div>
+                <input type="range" id="stuAtt" min="40" max="100" step="1" value="72" oninput="document.getElementById('stuAttLabel').textContent = this.value + '%'">
+              </div>
+
+              <details class="extra-options">
+                <summary>Thông tin nền tảng bổ sung</summary>
+                <div class="extra-body grid-2">
+                  <div class="field">
+                    <label class="field-label" for="stuTutoring">Học nhóm / Phụ đạo</label>
+                    <select id="stuTutoring">
+                      <option value="No" selected>Chưa tham gia</option>
+                      <option value="Yes">Đang tham gia</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label class="field-label" for="stuGender">Giới tính</label>
+                    <select id="stuGender">
+                      <option value="Male" selected>Nam</option>
+                      <option value="Female">Nữ</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label class="field-label" for="stuRegion">Khu vực</label>
+                    <select id="stuRegion">
+                      <option value="Urban" selected>Đô thị</option>
+                      <option value="Rural">Nông thôn / Tỉnh</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label class="field-label" for="stuParent">Nền tảng gia đình</label>
+                    <select id="stuParent">
+                      <option value="Secondary" selected>THPT</option>
+                      <option value="Tertiary">Đại học / CĐ</option>
+                      <option value="Primary">THCS</option>
+                      <option value="None">Khác</option>
+                    </select>
+                  </div>
+                </div>
+              </details>
+
+              <button type="submit" class="btn-primary" id="stuSubmitBtn">
+                Phân tích & Lập lộ trình học phần
+              </button>
+            </form>
+          </div>
+        </section>
+
+        <!-- Cột phải: Kết quả hiển thị gọn gàng -->
+        <section>
+          <!-- Trạng thái chờ ban đầu (không hiện dữ liệu mẫu cứng) -->
+          <div id="stuEmptyState" class="empty-panel">
+            <div class="empty-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+              </svg>
+            </div>
+            <h3>Chưa có dữ liệu phân tích</h3>
+            <p>Nhập tên học phần, nội dung lý thuyết bạn cần giải đáp và nhấn nút phân tích ở khung bên trái để bắt đầu.</p>
+          </div>
+
+          <!-- Nội dung kết quả sau khi phân tích -->
+          <div id="stuResultWrap" class="hidden">
+            <!-- Khối 1: Tóm tắt rủi ro gọn nhẹ -->
+            <div class="panel summary-card">
+              <div class="status-row">
+                <div>
+                  <span id="stuRiskPill" class="status-pill pill-danger">
+                    <span class="status-dot"></span>
+                    <span id="stuRiskLabel">Nguy cơ cao</span>
+                  </span>
+                  <p class="status-desc" id="stuRiskDesc"></p>
+                </div>
+              </div>
+
+              <div class="stacked-bar">
+                <div id="stuSeg0" class="seg-fill" style="width: 50%; background: var(--danger);"></div>
+                <div id="stuSeg1" class="seg-fill" style="width: 35%; background: var(--warn);"></div>
+                <div id="stuSeg2" class="seg-fill" style="width: 15%; background: var(--success);"></div>
+              </div>
+
+              <div class="prob-legend">
+                <span class="legend-item"><span class="legend-dot" style="background: var(--danger);"></span>Nguy cơ cao: <strong id="stuP0">0%</strong></span>
+                <span class="legend-item"><span class="legend-dot" style="background: var(--warn);"></span>Đạt chuẩn: <strong id="stuP1">0%</strong></span>
+                <span class="legend-item"><span class="legend-dot" style="background: var(--success);"></span>Năng lực tốt: <strong id="stuP2">0%</strong></span>
+              </div>
+
+              <div class="whatif-strip">
+                <div class="whatif-summary" id="stuWhatIfSummary"></div>
+                <button type="button" class="ghost-link" onclick="toggleWhatIfDrawer()">Mô phỏng giờ học</button>
+              </div>
+
+              <div id="stuWhatIfDrawer" class="whatif-drawer hidden">
+                <div class="field-label">
+                  <span>Thử điều chỉnh quỹ giờ tự học mỗi tuần</span>
+                  <span class="field-val" id="stuSimHoursVal">7.0 giờ/tuần</span>
+                </div>
+                <input type="range" id="stuSimHours" min="0" max="16" step="0.5" value="7.0" oninput="runStudentSimulation(this.value)">
+                <p style="font-size: 12.5px; color: var(--text-muted); margin-top: 8px;" id="stuSimOutcome"></p>
+              </div>
+            </div>
+
+            <!-- Khối 2: Tư vấn trọng tâm & Lộ trình học phần (Chia Tab không rối mắt) -->
+            <div class="panel">
+              <div class="tab-bar">
+                <button type="button" class="tab-item active" id="stuTabBtnAnswer" onclick="switchStudentTab('answer', this)">Giải đáp trọng tâm</button>
+                <button type="button" class="tab-item" id="stuTabBtnRoadmap" onclick="switchStudentTab('roadmap', this)">Lộ trình học phần</button>
+                <button type="button" class="tab-item" id="stuTabBtnHabits" onclick="switchStudentTab('habits', this)">Khuyến nghị thói quen</button>
+              </div>
+
+              <!-- Loading khi đang gọi Gemini -->
+              <div id="stuAiLoading" class="ai-loading hidden">
+                <div class="spinner"></div>
+                <div id="stuAiLoadingText">Đang phân tích kiến thức trọng tâm và thiết lập lộ trình học phần...</div>
+              </div>
+
+              <!-- Lỗi kết nối nếu có -->
+              <div id="stuAiError" class="tab-pane hidden">
+                <p style="color: var(--danger); font-size: 13.5px;" id="stuAiErrorMsg"></p>
+              </div>
+
+              <!-- Tab 1: Giải đáp trọng tâm -->
+              <div id="stuPaneAnswer" class="tab-pane">
+                <h3 class="topic-heading" id="stuTopicTitle"></h3>
+                <div class="theory-paragraph" id="stuDirectExplanation"></div>
+
+                <div class="sub-label">Điểm cốt lõi cần nắm vững</div>
+                <ul class="clean-list" id="stuTakeawaysList"></ul>
+
+                <div style="margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end;">
+                  <button type="button" class="btn-secondary" onclick="switchStudentTab('roadmap', document.getElementById('stuTabBtnRoadmap'))">
+                    Xem lộ trình học phần phù hợp &rarr;
+                  </button>
+                </div>
+              </div>
+
+              <!-- Tab 2: Lộ trình học phần -->
+              <div id="stuPaneRoadmap" class="tab-pane hidden">
+                <div class="roadmap-list" id="stuRoadmapContainer"></div>
+                <div class="method-note" id="stuMethodTip"></div>
+              </div>
+
+              <!-- Tab 3: Khuyến nghị thói quen -->
+              <div id="stuPaneHabits" class="tab-pane hidden">
+                <div class="sub-label">Đề xuất điều chỉnh nhịp độ học tập</div>
+                <ul class="clean-list" id="stuHabitsList"></ul>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- ==================== 2. GIAO DIỆN GIẢNG VIÊN & CỐ VẤN ==================== -->
+    <main id="facultyWorkspace" class="workspace hidden">
+      <div class="page-head">
+        <div>
+          <h1>Quản lý & Cảnh báo sớm học vụ</h1>
+          <p>Tải danh sách lớp học để sàng lọc tự động hoặc nhập thông tin đánh giá riêng từng sinh viên.</p>
+        </div>
+
+        <div class="segmented">
+          <button type="button" class="seg-btn active" id="facModeClassBtn" onclick="switchFacultyMode('class')">Danh sách cả lớp</button>
+          <button type="button" class="seg-btn" id="facModeSingleBtn" onclick="switchFacultyMode('single')">Đánh giá 1 sinh viên</button>
+        </div>
+      </div>
+
+      <!-- CHẾ ĐỘ 2A: TẢI FILE DANH SÁCH CẢ LỚP -->
+      <section id="facClassMode">
+        <div id="classDropzone" class="upload-dropzone">
+          <div class="dropzone-info">
+            <div class="dropzone-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+            </div>
+            <div>
+              <h3>Nhập dữ liệu danh sách lớp học</h3>
+              <p>Hỗ trợ tệp .CSV hoặc Excel (.XLSX) gồm Mã SV, Họ tên, Giờ tự học, Chuyên cần, Môn học lưu ý.</p>
+            </div>
+          </div>
+
+          <div class="dropzone-actions">
+            <label class="btn-primary" style="width: auto; cursor: pointer; padding: 8px 14px;">
+              Chọn tệp từ máy (.CSV / .XLSX)
+              <input type="file" id="classFileInput" accept=".csv,.xlsx,.xls" class="hidden" onchange="handleClassFileSelect(event)">
+            </label>
+            <button type="button" class="btn-secondary" onclick="loadSampleClass()">Dùng dữ liệu mẫu (20 SV)</button>
+            <a href="/api/download-sample-csv" class="btn-secondary">Tải tệp mẫu</a>
+          </div>
+        </div>
+
+        <!-- Trạng thái chưa tải danh sách -->
+        <div id="facClassEmpty" class="empty-panel">
+          <div class="empty-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <path d="M3 9h18"/><path d="M9 21V9"/>
+            </svg>
+          </div>
+          <h3>Chưa có dữ liệu lớp học</h3>
+          <p>Tải tệp danh sách sinh viên của lớp lên hoặc nhấn "Dùng dữ liệu mẫu (20 SV)" để chạy phân tầng rủi ro tự động.</p>
+        </div>
+
+        <!-- Kết quả bảng cả lớp -->
+        <div id="facClassResults" class="hidden">
+          <div class="stat-strip">
+            <div class="stat-box">
+              <div class="stat-label">Tổng sĩ số lớp</div>
+              <div class="stat-num" id="statTotal">0</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">Nguy cơ cao</div>
+              <div class="stat-num" style="color: var(--danger);" id="statRisk">0</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">Đạt chuẩn</div>
+              <div class="stat-num" style="color: var(--warn);" id="statTrack">0</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">Năng lực tốt</div>
+              <div class="stat-num" style="color: var(--success);" id="statExcel">0</div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="table-toolbar">
+              <div class="segmented">
+                <button type="button" class="seg-btn active" onclick="setClassFilter('all', this)">Tất cả</button>
+                <button type="button" class="seg-btn" onclick="setClassFilter('risk', this)">Nguy cơ cao</button>
+                <button type="button" class="seg-btn" onclick="setClassFilter('track', this)">Đạt chuẩn</button>
+                <button type="button" class="seg-btn" onclick="setClassFilter('excel', this)">Năng lực tốt</button>
+              </div>
+              <div class="search-box">
+                <input type="text" id="classSearchInput" placeholder="Tìm theo Mã SV hoặc Họ tên..." oninput="renderClassTable()">
+              </div>
+            </div>
+
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Mã SV</th>
+                    <th>Họ và tên</th>
+                    <th>Học phần lưu ý</th>
+                    <th>Chuyên cần</th>
+                    <th>Tự học / tuần</th>
+                    <th>Phân tầng</th>
+                    <th>Xác suất rủi ro</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="classTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CHẾ ĐỘ 2B: NHẬP THÔNG TIN 1 SINH VIÊN DÀNH CHO GIẢNG VIÊN -->
+      <section id="facSingleMode" class="hidden">
+        <div class="split-layout">
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">Nhập thông tin sinh viên</span>
+            </div>
+            <div class="panel-body">
+              <form id="facSingleForm">
+                <div class="grid-2">
+                  <div class="field">
+                    <label class="field-label" for="facStuId">Mã sinh viên</label>
+                    <input type="text" id="facStuId" placeholder="VD: 2022600105">
+                  </div>
+                  <div class="field">
+                    <label class="field-label" for="facStuName">Họ và tên</label>
+                    <input type="text" id="facStuName" placeholder="VD: Nguyễn Văn An">
+                  </div>
+                </div>
+
+                <div class="field">
+                  <div class="field-label">
+                    <span>Thời gian tự học khai báo</span>
+                    <span class="field-val" id="facHoursLabel">4.5 giờ/tuần</span>
+                  </div>
+                  <input type="range" id="facHours" min="0" max="16" step="0.5" value="4.5" oninput="document.getElementById('facHoursLabel').textContent = parseFloat(this.value).toFixed(1) + ' giờ/tuần'">
+                </div>
+
+                <div class="field">
+                  <div class="field-label">
+                    <span>Tỷ lệ chuyên cần thực tế</span>
+                    <span class="field-val" id="facAttLabel">65%</span>
+                  </div>
+                  <input type="range" id="facAtt" min="40" max="100" step="1" value="65" oninput="document.getElementById('facAttLabel').textContent = this.value + '%'">
+                </div>
+
+                <div class="grid-2">
+                  <div class="field">
+                    <label class="field-label" for="facTutoring">Học nhóm / Phụ đạo</label>
+                    <select id="facTutoring">
+                      <option value="No" selected>Không</option>
+                      <option value="Yes">Có</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label class="field-label" for="facPhase">Giai đoạn học kỳ</label>
+                    <select id="facPhase">
+                      <option value="early">Đầu kỳ</option>
+                      <option value="midterm" selected>Giữa kỳ</option>
+                      <option value="final">Cuối kỳ</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label class="field-label" for="facGender">Giới tính</label>
+                    <select id="facGender">
+                      <option value="Male" selected>Nam</option>
+                      <option value="Female">Nữ</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label class="field-label" for="facRegion">Khu vực</label>
+                    <select id="facRegion">
+                      <option value="Urban" selected>Đô thị</option>
+                      <option value="Rural">Nông thôn / Tỉnh</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="field">
+                  <label class="field-label" for="facParent">Học vấn gia đình</label>
+                  <select id="facParent">
+                    <option value="Secondary" selected>THPT</option>
+                    <option value="Tertiary">Đại học / Cao đẳng</option>
+                    <option value="Primary">THCS</option>
+                    <option value="None">Khác</option>
+                  </select>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="field">
+                  <label class="field-label" for="facSubject">Học phần cần định hướng hỗ trợ (tùy chọn)</label>
+                  <input type="text" id="facSubject" placeholder="VD: Kỹ thuật lập trình, Giải tích, Nguyên lý kế toán...">
+                </div>
+
+                <div class="field">
+                  <label class="field-label" for="facNoteInput">Ghi chú khó khăn của sinh viên (tùy chọn)</label>
+                  <textarea id="facNoteInput" placeholder="VD: Hổng kiến thức cơ bản, chưa biết cách làm bài tập lớn..."></textarea>
+                </div>
+
+                <button type="submit" class="btn-primary" id="facSingleBtn">
+                  Đánh giá hồ sơ sinh viên
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <!-- Kết quả đánh giá 1 sinh viên của Giảng viên -->
+          <div>
+            <div id="facSingleEmpty" class="empty-panel">
+              <div class="empty-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+                </svg>
+              </div>
+              <h3>Phiếu đánh giá cá nhân</h3>
+              <p>Nhập thông số chuyên cần, tự học của sinh viên bên trái để xem dự báo rủi ro và gợi ý biện pháp hỗ trợ học vụ.</p>
+            </div>
+
+            <div id="facSingleResult" class="hidden">
+              <div class="panel summary-card">
+                <div class="status-row">
+                  <div>
+                    <div style="font-size: 15px; font-weight: 600; margin-bottom: 6px;" id="facResStudentTitle"></div>
+                    <span id="facResPill" class="status-pill pill-danger">
+                      <span class="status-dot"></span>
+                      <span id="facResLabel">Nguy cơ cao</span>
+                    </span>
+                    <p class="status-desc" id="facResDesc"></p>
+                  </div>
+                  <button type="button" class="btn-secondary" onclick="copyAdvisorReport()">Sao chép phiếu</button>
+                </div>
+
+                <div class="stacked-bar">
+                  <div id="facSeg0" class="seg-fill" style="width: 50%; background: var(--danger);"></div>
+                  <div id="facSeg1" class="seg-fill" style="width: 35%; background: var(--warn);"></div>
+                  <div id="facSeg2" class="seg-fill" style="width: 15%; background: var(--success);"></div>
+                </div>
+
+                <div class="prob-legend">
+                  <span class="legend-item"><span class="legend-dot" style="background: var(--danger);"></span>Nguy cơ cao: <strong id="facP0">0%</strong></span>
+                  <span class="legend-item"><span class="legend-dot" style="background: var(--warn);"></span>Đạt chuẩn: <strong id="facP1">0%</strong></span>
+                  <span class="legend-item"><span class="legend-dot" style="background: var(--success);"></span>Năng lực tốt: <strong id="facP2">0%</strong></span>
+                </div>
+
+                <div class="whatif-strip">
+                  <div class="whatif-summary" id="facWhatIfText"></div>
+                </div>
+              </div>
+
+              <div class="panel">
+                <div class="panel-header">
+                  <span class="panel-title">Đề xuất can thiệp sư phạm & Định hướng học phần</span>
+                </div>
+                <div class="panel-body">
+                  <div class="sub-label">Khuyến nghị dành cho Giảng viên / Cố vấn</div>
+                  <ul class="clean-list" id="facAdvisorActions" style="margin-bottom: 18px;"></ul>
+
+                  <div id="facAiSection" class="hidden">
+                    <div class="divider"></div>
+                    <div id="facAiLoading" class="ai-loading hidden">
+                      <div class="spinner"></div>
+                      <div>Đang lập định hướng lộ trình hỗ trợ học phần...</div>
+                    </div>
+                    <div id="facAiContent" class="hidden">
+                      <div class="sub-label">Định hướng lộ trình học phần cho sinh viên</div>
+                      <h4 class="topic-heading" id="facAiTopic"></h4>
+                      <p class="theory-paragraph" id="facAiSummary"></p>
+                      <div class="roadmap-list" id="facAiRoadmap"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- NGĂN TRƯỢT CHI TIẾT SINH VIÊN TỪ BẢNG LỚP HỌC -->
+  <div id="studentDrawer" class="drawer-backdrop hidden" onclick="if(event.target === this) closeDrawer()">
+    <div class="drawer-panel">
+      <div class="drawer-head">
+        <div>
+          <h3 style="font-size: 16px; font-weight: 600;" id="drwName">Sinh viên</h3>
+          <p style="font-size: 12.5px; color: var(--text-muted); margin-top: 2px;" id="drwMeta"></p>
+        </div>
+        <button type="button" class="ghost-link" onclick="closeDrawer()">Đóng</button>
+      </div>
+
+      <div>
+        <span id="drwPill" class="status-pill pill-danger">
+          <span class="status-dot"></span>
+          <span id="drwRiskText">Nguy cơ cao</span>
+        </span>
+      </div>
+
+      <div class="method-note" id="drwMetrics"></div>
+
+      <div>
+        <div class="sub-label">Biện pháp cố vấn học tập</div>
+        <ul class="clean-list" id="drwActions"></ul>
+      </div>
+
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <button type="button" class="btn-primary" style="width: auto; flex: 1;" id="drwGenRoadmapBtn" onclick="generateDrawerRoadmap()">
+          Lập lộ trình môn học lưu ý
+        </button>
+        <button type="button" class="btn-secondary" onclick="copyDrawerNote()">Sao chép ghi chú</button>
+      </div>
+
+      <div id="drwAiLoading" class="ai-loading hidden">
+        <div class="spinner"></div>
+        <div>Đang xây dựng lộ trình hỗ trợ học phần...</div>
+      </div>
+
+      <div id="drwAiBox" class="hidden">
+        <div class="divider"></div>
+        <div class="sub-label" id="drwAiTitle">Lộ trình đề xuất</div>
+        <p class="theory-paragraph" id="drwAiExplain" style="font-size: 13.5px;"></p>
+        <div class="roadmap-list" id="drwAiSteps"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let classStudentsData = [];
+    let currentClassFilter = 'all';
+    let selectedDrawerStudent = null;
+    let lastAdvisorReportText = '';
+
+    // Luôn hiển thị màn hình chọn vai trò khi nhấn Đổi vai trò hoặc lần đầu mở trang
+    function showRoleGate() {
+      document.getElementById('roleGateScreen').classList.remove('hidden');
+      document.getElementById('appShell').classList.add('hidden');
+    }
+
+    function enterWorkspace(role) {
+      document.getElementById('roleGateScreen').classList.add('hidden');
+      document.getElementById('appShell').classList.remove('hidden');
+
+      const stuWs = document.getElementById('studentWorkspace');
+      const facWs = document.getElementById('facultyWorkspace');
+      const btnStu = document.getElementById('navBtnStudent');
+      const btnFac = document.getElementById('navBtnFaculty');
+
+      if (role === 'student') {
+        stuWs.classList.remove('hidden');
+        facWs.classList.add('hidden');
+        btnStu.classList.add('active');
+        btnFac.classList.remove('active');
+      } else {
+        facWs.classList.remove('hidden');
+        stuWs.classList.add('hidden');
+        btnFac.classList.add('active');
+        btnStu.classList.remove('active');
+      }
+    }
+
+    // ==================== SINH VIÊN ====================
+    function clearStudentInputs() {
+      document.getElementById('stuSubject').value = '';
+      document.getElementById('stuQuestion').value = '';
+      document.getElementById('stuEmptyState').classList.remove('hidden');
+      document.getElementById('stuResultWrap').classList.add('hidden');
+      document.getElementById('stuSubject').focus();
+    }
+
+    function fillStudentExample(subject, question) {
+      document.getElementById('stuSubject').value = subject;
+      document.getElementById('stuQuestion').value = question;
+      document.getElementById('stuQuestion').focus();
+    }
+
+    function switchStudentTab(tabName, btnEl) {
+      const bar = btnEl.parentElement;
+      bar.querySelectorAll('.tab-item').forEach(b => b.classList.remove('active'));
+      btnEl.classList.add('active');
+
+      document.getElementById('stuPaneAnswer').classList.toggle('hidden', tabName !== 'answer');
+      document.getElementById('stuPaneRoadmap').classList.toggle('hidden', tabName !== 'roadmap');
+      document.getElementById('stuPaneHabits').classList.toggle('hidden', tabName !== 'habits');
+    }
+
+    function toggleWhatIfDrawer() {
+      document.getElementById('stuWhatIfDrawer').classList.toggle('hidden');
+    }
+
+    function applyPillStyle(pillEl, code) {
+      pillEl.className = 'status-pill';
+      if (code === 0) pillEl.classList.add('pill-danger');
+      else if (code === 1) pillEl.classList.add('pill-warn');
+      else pillEl.classList.add('pill-success');
+    }
+
+    document.getElementById('studentForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const subject = document.getElementById('stuSubject').value.trim();
+      const question = document.getElementById('stuQuestion').value.trim();
+
+      if (!subject && !question) {
+        alert('Vui lòng nhập tên môn học hoặc vấn đề lý thuyết bạn cần tư vấn.');
+        document.getElementById('stuSubject').focus();
+        return;
+      }
+
+      const submitBtn = document.getElementById('stuSubmitBtn');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Đang phân tích dữ liệu...';
+
+      const hours = parseFloat(document.getElementById('stuHours').value);
+      const att = parseFloat(document.getElementById('stuAtt').value);
+      const phase = document.getElementById('stuPhase').value;
+
+      const mlPayload = {
+        "Gender": document.getElementById('stuGender').value,
+        "HoursStudied/Week": hours,
+        "Tutoring": document.getElementById('stuTutoring').value,
+        "Region": document.getElementById('stuRegion').value,
+        "Attendance(%)": att,
+        "Parent Education": document.getElementById('stuParent').value,
+        "semester_phase": phase,
+        "struggling_subject": subject,
+        "specific_bottleneck": question
+      };
+
+      try {
+        const res = await fetch('/predict', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(mlPayload)
+        });
+        const data = await res.json();
+        if (!res.ok || data.status !== 'success') {
+          throw new Error(data.message || 'Không thể phân tích dữ liệu.');
+        }
+
+        document.getElementById('stuEmptyState').classList.add('hidden');
+        document.getElementById('stuResultWrap').classList.remove('hidden');
+
+        // Cập nhật kết quả ML
+        const code = data.predicted_class_code;
+        document.getElementById('stuRiskLabel').textContent = data.predicted_class_name;
+        document.getElementById('stuRiskDesc').textContent = data.class_description;
+        applyPillStyle(document.getElementById('stuRiskPill'), code);
+
+        const probs = data.class_probabilities || {};
+        const p0 = ((probs['Cần Hỗ Trợ (<60)'] || 0) * 100).toFixed(1);
+        const p1 = ((probs['Đạt Chuẩn (60-80)'] || 0) * 100).toFixed(1);
+        const p2 = ((probs['Xuất Sắc (>=80)'] || 0) * 100).toFixed(1);
+
+        document.getElementById('stuP0').textContent = p0 + '%';
+        document.getElementById('stuP1').textContent = p1 + '%';
+        document.getElementById('stuP2').textContent = p2 + '%';
+        document.getElementById('stuSeg0').style.width = p0 + '%';
+        document.getElementById('stuSeg1').style.width = p1 + '%';
+        document.getElementById('stuSeg2').style.width = p2 + '%';
+
+        // What-If
+        const w = data.what_if_analysis;
+        if (w) {
+          if (code === 0) {
+            document.getElementById('stuWhatIfSummary').innerHTML =
+              'Ngưỡng an toàn khuyến nghị: duy trì chuyên cần <strong>&ge; ' + w.target_attendance + '%</strong> và nâng tự học lên <strong>' + w.target_hours + ' giờ/tuần</strong> (+' + w.daily_extra_mins + ' phút/ngày).';
+          } else {
+            document.getElementById('stuWhatIfSummary').innerHTML =
+              'Nhịp độ hiện tại đang ở vùng an toàn. Có thể thử nghiệm tăng giờ tự học để tối ưu xác suất đạt điểm giỏi.';
+          }
+          document.getElementById('stuSimHours').value = w.target_hours;
+          runStudentSimulation(w.target_hours);
+        }
+
+        // Khuyến nghị thói quen
+        const habitsList = document.getElementById('stuHabitsList');
+        habitsList.innerHTML = '';
+        (data.stakeholder_recommendations.for_student || []).forEach(item => {
+          const li = document.createElement('li');
+          li.textContent = item;
+          habitsList.appendChild(li);
+        });
+
+        // Gọi Gemini giải đáp trọng tâm & lập lộ trình học phần
+        await fetchStudentGemini({
+          risk_tier: data.predicted_class_name,
+          risk_prob: probs['Cần Hỗ Trợ (<60)'] || 0,
+          hours_studied: hours,
+          attendance: att,
+          semester_phase: phase,
+          struggling_subject: subject,
+          specific_bottleneck: question
+        });
+
+      } catch (err) {
+        alert('Lỗi: ' + err.message);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Phân tích & Lập lộ trình học phần';
+      }
+    });
+
+    async function runStudentSimulation(val) {
+      const h = parseFloat(val);
+      document.getElementById('stuSimHoursVal').textContent = h.toFixed(1) + ' giờ/tuần';
+      try {
+        const res = await fetch('/api/simulate-hours', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            gender: document.getElementById('stuGender').value,
+            region: document.getElementById('stuRegion').value,
+            tutoring: document.getElementById('stuTutoring').value,
+            parent_education: document.getElementById('stuParent').value,
+            hours_studied: h,
+            attendance: parseFloat(document.getElementById('stuAtt').value)
+          })
+        });
+        const d = await res.json();
+        if (res.ok && d.status === 'success') {
+          const rPct = (d.risk_probability * 100).toFixed(1);
+          const sPct = ((d.safe_probability + d.excel_probability) * 100).toFixed(1);
+          document.getElementById('stuSimOutcome').innerHTML =
+            'Dự báo mới: Xác suất rủi ro còn <strong>' + rPct + '%</strong> — Xác suất đạt chuẩn & khá giỏi tăng lên <strong>' + sPct + '%</strong>.';
+        }
+      } catch (_) {}
+    }
+
+    async function fetchStudentGemini(payload) {
+      const loadingEl = document.getElementById('stuAiLoading');
+      const errorEl = document.getElementById('stuAiError');
+      const paneAns = document.getElementById('stuPaneAnswer');
+      const paneRoad = document.getElementById('stuPaneRoadmap');
+      const paneHab = document.getElementById('stuPaneHabits');
+
+      // Đặt lại về tab đầu tiên nhưng ẩn nội dung trong lúc chờ AI mới
+      const tabButtons = document.querySelectorAll('#stuResultWrap .tab-item');
+      tabButtons.forEach((b, i) => b.classList.toggle('active', i === 0));
+
+      errorEl.classList.add('hidden');
+      paneAns.classList.add('hidden');
+      paneRoad.classList.add('hidden');
+      paneHab.classList.add('hidden');
+      loadingEl.classList.remove('hidden');
+
+      // Xóa sạch dữ liệu cũ để không bao giờ bị dính câu trả lời trước
+      document.getElementById('stuTabBtnRoadmap').textContent = 'Lộ trình học phần';
+      document.getElementById('stuTopicTitle').textContent = '';
+      document.getElementById('stuDirectExplanation').textContent = '';
+      document.getElementById('stuTakeawaysList').innerHTML = '';
+      document.getElementById('stuRoadmapContainer').innerHTML = '';
+      document.getElementById('stuMethodTip').textContent = '';
+
+      try {
+        const res = await fetch('/api/gemini-consult', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const json = await res.json();
+        if (!res.ok || json.status !== 'success' || !json.data) {
+          throw new Error(json.message || 'Không nhận được phản hồi từ AI.');
+        }
+
+        const d = json.data;
+        document.getElementById('stuTopicTitle').textContent = d.topic_title || payload.struggling_subject;
+        document.getElementById('stuDirectExplanation').textContent = d.direct_explanation || '';
+
+        const tkList = document.getElementById('stuTakeawaysList');
+        (d.key_takeaways || []).forEach(t => {
+          const li = document.createElement('li');
+          li.textContent = t;
+          tkList.appendChild(li);
+        });
+
+        const roadWrap = document.getElementById('stuRoadmapContainer');
+        const steps = d.course_roadmap || [];
+        document.getElementById('stuTabBtnRoadmap').textContent =
+          steps.length > 0 ? 'Lộ trình học phần (' + steps.length + ' chặng)' : 'Lộ trình học phần';
+        steps.forEach(step => {
+          const div = document.createElement('div');
+          div.className = 'roadmap-step';
+          div.innerHTML =
+            '<div class="roadmap-step-top">' +
+              '<span class="roadmap-stage"></span>' +
+              '<span class="roadmap-duration"></span>' +
+            '</div>' +
+            '<div class="roadmap-focus"></div>' +
+            '<div class="roadmap-action"></div>';
+          div.querySelector('.roadmap-stage').textContent = step.stage || '';
+          div.querySelector('.roadmap-duration').textContent = step.duration || '';
+          div.querySelector('.roadmap-focus').textContent = step.focus || '';
+          div.querySelector('.roadmap-action').textContent = step.action || '';
+          roadWrap.appendChild(div);
+        });
+
+        const tipEl = document.getElementById('stuMethodTip');
+        if (d.study_method_tip) {
+          tipEl.textContent = 'Phương pháp gợi ý: ' + d.study_method_tip;
+          tipEl.classList.remove('hidden');
+        } else {
+          tipEl.classList.add('hidden');
+        }
+
+        paneAns.classList.remove('hidden');
+      } catch (err) {
+        document.getElementById('stuAiErrorMsg').textContent = err.message;
+        errorEl.classList.remove('hidden');
+      } finally {
+        loadingEl.classList.add('hidden');
+      }
+    }
+
+    // ==================== GIẢNG VIÊN: CHUYỂN CHẾ ĐỘ ====================
+    function switchFacultyMode(mode) {
+      const isClass = mode === 'class';
+      document.getElementById('facClassMode').classList.toggle('hidden', !isClass);
+      document.getElementById('facSingleMode').classList.toggle('hidden', isClass);
+      document.getElementById('facModeClassBtn').classList.toggle('active', isClass);
+      document.getElementById('facModeSingleBtn').classList.toggle('active', !isClass);
+    }
+
+    // Kéo thả file danh sách lớp
+    const dz = document.getElementById('classDropzone');
+    dz.addEventListener('dragover', (e) => { e.preventDefault(); dz.classList.add('dragover'); });
+    dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+    dz.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dz.classList.remove('dragover');
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        uploadClassFileObject(e.dataTransfer.files[0]);
+      }
+    });
+
+    function handleClassFileSelect(event) {
+      const file = event.target.files[0];
+      if (file) {
+        uploadClassFileObject(file);
+        event.target.value = '';
+      }
+    }
+
+    function uploadClassFileObject(file) {
+      const reader = new FileReader();
+      reader.onload = async function(ev) {
+        const dataUrl = ev.target.result;
+        const base64Content = dataUrl.split(',')[1];
+        try {
+          const res = await fetch('/api/upload-class-file', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              filename: file.name,
+              content_base64: base64Content
+            })
+          });
+          const data = await res.json();
+          if (!res.ok || data.status !== 'success') {
+            throw new Error(data.message || 'Lỗi đọc tệp danh sách lớp.');
+          }
+          applyClassBatchData(data);
+        } catch (err) {
+          alert('Không thể nhập tệp: ' + err.message);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+
+    async function loadSampleClass() {
+      try {
+        const res = await fetch('/api/get-sample-data');
+        const sampleJson = await res.json();
+        if (!res.ok || sampleJson.status !== 'success') {
+          throw new Error('Không tải được dữ liệu mẫu.');
+        }
+        const predRes = await fetch('/api/batch-predict', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ students: sampleJson.data })
+        });
+        const predData = await predRes.json();
+        if (predRes.ok && predData.status === 'success') {
+          applyClassBatchData(predData);
+        }
+      } catch (err) {
+        alert('Lỗi: ' + err.message);
+      }
+    }
+
+    function applyClassBatchData(data) {
+      classStudentsData = data.students || [];
+      const s = data.summary || {};
+
+      document.getElementById('facClassEmpty').classList.add('hidden');
+      document.getElementById('facClassResults').classList.remove('hidden');
+
+      document.getElementById('statTotal').textContent = s.total_students || 0;
+      document.getElementById('statRisk').textContent = s.at_risk_count || 0;
+      document.getElementById('statTrack').textContent = s.on_track_count || 0;
+      document.getElementById('statExcel').textContent = s.excel_count || 0;
+
+      renderClassTable();
+    }
+
+    function setClassFilter(filterKey, btnEl) {
+      currentClassFilter = filterKey;
+      btnEl.parentElement.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
+      btnEl.classList.add('active');
+      renderClassTable();
+    }
+
+    function renderClassTable() {
+      const tbody = document.getElementById('classTableBody');
+      const keyword = (document.getElementById('classSearchInput').value || '').trim().toLowerCase();
+      tbody.innerHTML = '';
+
+      const filtered = classStudentsData.filter(st => {
+        if (currentClassFilter === 'risk' && st.predicted_code !== 0) return false;
+        if (currentClassFilter === 'track' && st.predicted_code !== 1) return false;
+        if (currentClassFilter === 'excel' && st.predicted_code !== 2) return false;
+        if (keyword) {
+          const matchId = String(st.student_id).toLowerCase().includes(keyword);
+          const matchName = String(st.full_name).toLowerCase().includes(keyword);
+          const matchSub = String(st.struggling_subject).toLowerCase().includes(keyword);
+          if (!matchId && !matchName && !matchSub) return false;
+        }
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = '<td colspan="8" style="text-align: center; padding: 28px; color: var(--text-muted);">Không có sinh viên phù hợp với bộ lọc hiện tại.</td>';
+        tbody.appendChild(tr);
+        return;
+      }
+
+      filtered.forEach((st, idx) => {
+        const tr = document.createElement('tr');
+        let pillCls = 'pill-warn';
+        if (st.predicted_code === 0) pillCls = 'pill-danger';
+        else if (st.predicted_code === 2) pillCls = 'pill-success';
+
+        const attStyle = st.danger_attendance ? 'color: var(--danger); font-weight: 600;' : '';
+
+        tr.innerHTML =
+          '<td style="font-variant-numeric: tabular-nums; font-weight: 500;"></td>' +
+          '<td class="td-name"></td>' +
+          '<td></td>' +
+          '<td style="' + attStyle + '"></td>' +
+          '<td></td>' +
+          '<td><span class="status-pill ' + pillCls + '"><span class="status-dot"></span><span class="lbl"></span></span></td>' +
+          '<td style="font-variant-numeric: tabular-nums; font-weight: 600;"></td>' +
+          '<td style="text-align: right;"><button type="button" class="ghost-link">Chi tiết</button></td>';
+
+        const tds = tr.querySelectorAll('td');
+        tds[0].textContent = st.student_id;
+        tds[1].textContent = st.full_name;
+        tds[2].textContent = st.struggling_subject;
+        tds[3].textContent = st.attendance.toFixed(0) + '%';
+        tds[4].textContent = st.hours_studied.toFixed(1) + ' giờ';
+        tr.querySelector('.lbl').textContent = st.predicted_label;
+        tds[6].textContent = st.risk_probability.toFixed(1) + '%';
+        tr.querySelector('button').addEventListener('click', () => openStudentDrawer(st));
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    function openStudentDrawer(st) {
+      selectedDrawerStudent = st;
+      document.getElementById('drwName').textContent = st.full_name + ' (' + st.student_id + ')';
+      document.getElementById('drwMeta').textContent = 'Học phần lưu ý: ' + st.struggling_subject;
+
+      const pill = document.getElementById('drwPill');
+      applyPillStyle(pill, st.predicted_code);
+      document.getElementById('drwRiskText').textContent = st.predicted_label + ' — Rủi ro ' + st.risk_probability.toFixed(1) + '%';
+
+      document.getElementById('drwMetrics').textContent =
+        'Chuyên cần hiện tại: ' + st.attendance.toFixed(0) + '%  •  Tự học: ' + st.hours_studied.toFixed(1) + ' giờ/tuần';
+
+      const ul = document.getElementById('drwActions');
+      ul.innerHTML = '';
+      const actions = [];
+      if (st.predicted_code === 0) {
+        if (st.attendance < 80) {
+          actions.push('Nhắc nhở trực tiếp về điều kiện dự thi học phần (chuyên cần hiện đạt ' + st.attendance.toFixed(0) + '%).');
+        }
+        actions.push('Yêu cầu sinh viên tăng thời lượng tự học tối thiểu lên 7.5 – 9.0 giờ/tuần và kiểm tra bài tập quá trình.');
+        actions.push('Phân công nhóm học tập hỗ trợ học phần ' + st.struggling_subject + '.');
+      } else if (st.predicted_code === 1) {
+        actions.push('Theo dõi định kỳ tiến độ bài kiểm tra giữa kỳ môn ' + st.struggling_subject + '.');
+        actions.push('Khuyến khích duy trì chuyên cần và nâng thời gian tự học thêm 1.5 giờ/tuần.');
+      } else {
+        actions.push('Tình trạng học tập tốt, có thể giao vai trò nhóm trưởng hỗ trợ các bạn trong lớp.');
+      }
+      actions.forEach(a => {
+        const li = document.createElement('li');
+        li.textContent = a;
+        ul.appendChild(li);
+      });
+
+      document.getElementById('drwAiLoading').classList.add('hidden');
+      document.getElementById('drwAiBox').classList.add('hidden');
+      document.getElementById('studentDrawer').classList.remove('hidden');
+    }
+
+    function closeDrawer() {
+      document.getElementById('studentDrawer').classList.add('hidden');
+    }
+
+    async function generateDrawerRoadmap() {
+      if (!selectedDrawerStudent) return;
+      const st = selectedDrawerStudent;
+      const loading = document.getElementById('drwAiLoading');
+      const box = document.getElementById('drwAiBox');
+      const btn = document.getElementById('drwGenRoadmapBtn');
+
+      btn.disabled = true;
+      box.classList.add('hidden');
+      loading.classList.remove('hidden');
+
+      try {
+        const res = await fetch('/api/gemini-consult', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            risk_tier: st.predicted_label,
+            risk_prob: st.risk_probability / 100.0,
+            hours_studied: st.hours_studied,
+            attendance: st.attendance,
+            semester_phase: 'midterm',
+            struggling_subject: st.struggling_subject,
+            specific_bottleneck: 'Xây dựng lộ trình ôn tập trọng tâm và củng cố kiến thức nền tảng cho học phần ' + st.struggling_subject
+          })
+        });
+        const json = await res.json();
+        if (!res.ok || json.status !== 'success') {
+          throw new Error(json.message || 'Lỗi kết nối AI');
+        }
+        const d = json.data;
+        document.getElementById('drwAiTitle').textContent = d.topic_title || st.struggling_subject;
+        document.getElementById('drwAiExplain').textContent = d.direct_explanation || '';
+
+        const stepsEl = document.getElementById('drwAiSteps');
+        stepsEl.innerHTML = '';
+        (d.course_roadmap || []).forEach(step => {
+          const item = document.createElement('div');
+          item.className = 'roadmap-step';
+          item.innerHTML =
+            '<div class="roadmap-step-top"><span class="roadmap-stage"></span><span class="roadmap-duration"></span></div>' +
+            '<div class="roadmap-focus"></div>' +
+            '<div class="roadmap-action"></div>';
+          item.querySelector('.roadmap-stage').textContent = step.stage || '';
+          item.querySelector('.roadmap-duration').textContent = step.duration || '';
+          item.querySelector('.roadmap-focus').textContent = step.focus || '';
+          item.querySelector('.roadmap-action').textContent = step.action || '';
+          stepsEl.appendChild(item);
+        });
+        box.classList.remove('hidden');
+      } catch (err) {
+        alert('Lỗi: ' + err.message);
+      } finally {
+        loading.classList.add('hidden');
+        btn.disabled = false;
+      }
+    }
+
+    function copyDrawerNote() {
+      if (!selectedDrawerStudent) return;
+      const st = selectedDrawerStudent;
+      const actions = Array.from(document.querySelectorAll('#drwActions li')).map(li => '- ' + li.textContent).join('\n');
+      const content =
+        'PHIẾU THEO DÕI HỌC VỤ SINH VIÊN\n' +
+        'Sinh viên: ' + st.full_name + ' (' + st.student_id + ')\n' +
+        'Học phần lưu ý: ' + st.struggling_subject + '\n' +
+        'Chuyên cần: ' + st.attendance.toFixed(0) + '% | Tự học: ' + st.hours_studied.toFixed(1) + ' giờ/tuần\n' +
+        'Phân tầng: ' + st.predicted_label + ' (' + st.risk_probability.toFixed(1) + '%)\n' +
+        'Đề xuất hỗ trợ:\n' + actions;
+      navigator.clipboard.writeText(content).then(() => alert('Đã sao chép ghi chú học vụ.'));
+    }
+
+    // ==================== GIẢNG VIÊN: ĐÁNH GIÁ 1 SINH VIÊN ====================
+    document.getElementById('facSingleForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('facSingleBtn');
+      btn.disabled = true;
+      btn.textContent = 'Đang đánh giá...';
+
+      const stuId = document.getElementById('facStuId').value.trim() || 'Chưa nhập mã';
+      const stuName = document.getElementById('facStuName').value.trim() || 'Sinh viên';
+      const hours = parseFloat(document.getElementById('facHours').value);
+      const att = parseFloat(document.getElementById('facAtt').value);
+      const phase = document.getElementById('facPhase').value;
+      const subject = document.getElementById('facSubject').value.trim();
+      const note = document.getElementById('facNoteInput').value.trim();
+
+      try {
+        const res = await fetch('/predict', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            "Gender": document.getElementById('facGender').value,
+            "HoursStudied/Week": hours,
+            "Tutoring": document.getElementById('facTutoring').value,
+            "Region": document.getElementById('facRegion').value,
+            "Attendance(%)": att,
+            "Parent Education": document.getElementById('facParent').value,
+            "semester_phase": phase,
+            "struggling_subject": subject,
+            "specific_bottleneck": note
+          })
+        });
+        const data = await res.json();
+        if (!res.ok || data.status !== 'success') {
+          throw new Error(data.message || 'Lỗi đánh giá hồ sơ.');
+        }
+
+        document.getElementById('facSingleEmpty').classList.add('hidden');
+        document.getElementById('facSingleResult').classList.remove('hidden');
+
+        document.getElementById('facResStudentTitle').textContent = stuName + ' (' + stuId + ')';
+        document.getElementById('facResLabel').textContent = data.predicted_class_name;
+        document.getElementById('facResDesc').textContent = data.class_description;
+        applyPillStyle(document.getElementById('facResPill'), data.predicted_class_code);
+
+        const probs = data.class_probabilities || {};
+        const p0 = ((probs['Cần Hỗ Trợ (<60)'] || 0) * 100).toFixed(1);
+        const p1 = ((probs['Đạt Chuẩn (60-80)'] || 0) * 100).toFixed(1);
+        const p2 = ((probs['Xuất Sắc (>=80)'] || 0) * 100).toFixed(1);
+
+        document.getElementById('facP0').textContent = p0 + '%';
+        document.getElementById('facP1').textContent = p1 + '%';
+        document.getElementById('facP2').textContent = p2 + '%';
+        document.getElementById('facSeg0').style.width = p0 + '%';
+        document.getElementById('facSeg1').style.width = p1 + '%';
+        document.getElementById('facSeg2').style.width = p2 + '%';
+
+        const w = data.what_if_analysis;
+        if (w) {
+          document.getElementById('facWhatIfText').innerHTML =
+            'Mục tiêu điều chỉnh: duy trì chuyên cần <strong>&ge; ' + w.target_attendance + '%</strong> và thời lượng tự học đạt <strong>' + w.target_hours + ' giờ/tuần</strong>.';
+        }
+
+        const advList = document.getElementById('facAdvisorActions');
+        advList.innerHTML = '';
+        const advItems = data.stakeholder_recommendations.for_advisor || [];
+        advItems.forEach(item => {
+          const li = document.createElement('li');
+          li.textContent = item;
+          advList.appendChild(li);
+        });
+
+        lastAdvisorReportText =
+          'PHIẾU ĐÁNH GIÁ & TƯ VẤN HỌC VỤ\n' +
+          'Sinh viên: ' + stuName + ' (' + stuId + ')\n' +
+          'Chuyên cần: ' + att + '% | Tự học: ' + hours + ' giờ/tuần\n' +
+          'Kết quả phân tầng: ' + data.predicted_class_name + ' (Rủi ro: ' + p0 + '%)\n' +
+          'Khuyến nghị can thiệp:\n' + advItems.map(x => '- ' + x).join('\n');
+
+        // Nếu giảng viên có nhập học phần cần hỗ trợ thì gọi AI tạo lộ trình học phần
+        const aiSec = document.getElementById('facAiSection');
+        if (subject || note) {
+          aiSec.classList.remove('hidden');
+          document.getElementById('facAiLoading').classList.remove('hidden');
+          document.getElementById('facAiContent').classList.add('hidden');
+
+          const aiRes = await fetch('/api/gemini-consult', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              risk_tier: data.predicted_class_name,
+              risk_prob: probs['Cần Hỗ Trợ (<60)'] || 0,
+              hours_studied: hours,
+              attendance: att,
+              semester_phase: phase,
+              struggling_subject: subject,
+              specific_bottleneck: note
+            })
+          });
+          const aiJson = await aiRes.json();
+          document.getElementById('facAiLoading').classList.add('hidden');
+          if (aiRes.ok && aiJson.status === 'success' && aiJson.data) {
+            const d = aiJson.data;
+            document.getElementById('facAiTopic').textContent = d.topic_title || subject;
+            document.getElementById('facAiSummary').textContent = d.direct_explanation || '';
+            const rList = document.getElementById('facAiRoadmap');
+            rList.innerHTML = '';
+            (d.course_roadmap || []).forEach(st => {
+              const stepDiv = document.createElement('div');
+              stepDiv.className = 'roadmap-step';
+              stepDiv.innerHTML =
+                '<div class="roadmap-step-top"><span class="roadmap-stage"></span><span class="roadmap-duration"></span></div>' +
+                '<div class="roadmap-focus"></div>' +
+                '<div class="roadmap-action"></div>';
+              stepDiv.querySelector('.roadmap-stage').textContent = st.stage || '';
+              stepDiv.querySelector('.roadmap-duration').textContent = st.duration || '';
+              stepDiv.querySelector('.roadmap-focus').textContent = st.focus || '';
+              stepDiv.querySelector('.roadmap-action').textContent = st.action || '';
+              rList.appendChild(stepDiv);
+            });
+            document.getElementById('facAiContent').classList.remove('hidden');
+          }
+        } else {
+          aiSec.classList.add('hidden');
+        }
+      } catch (err) {
+        alert('Lỗi: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Đánh giá hồ sơ sinh viên';
+      }
+    });
+
+    function copyAdvisorReport() {
+      if (!lastAdvisorReportText) return;
+      navigator.clipboard.writeText(lastAdvisorReportText).then(() => {
+        alert('Đã sao chép phiếu đánh giá học vụ.');
+      });
+    }
+  </script>
+</body>
+</html>
