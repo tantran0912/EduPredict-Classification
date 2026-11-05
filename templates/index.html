@@ -371,15 +371,25 @@
     }
 
     .key-dot {
-      width: 8px;
-      height: 8px;
+      width: 9px;
+      height: 9px;
       border-radius: 50%;
       background: var(--warn);
       display: inline-block;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      box-shadow: 0 0 0 2px rgba(180, 83, 9, 0.18);
     }
 
     .key-dot.ready {
       background: var(--success);
+      box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.2);
+    }
+
+    .key-dot:hover {
+      transform: scale(1.25);
     }
 
     /* ==================== MAIN WORKSPACE ==================== */
@@ -1427,11 +1437,8 @@
             <button type="button" class="seg-btn active" id="navBtnStudent" onclick="enterWorkspace('student')">Cổng Sinh viên</button>
             <button type="button" class="seg-btn" id="navBtnFaculty" onclick="enterWorkspace('faculty')">Cổng Giảng viên</button>
           </div>
-          <button type="button" class="ghost-link" onclick="openApiKeyModal()" title="Cài đặt khóa kết nối Google Gemini AI">
-            <span id="aiKeyDot" class="key-dot"></span>
-            <span id="aiKeyBtnLabel">Cấu hình AI</span>
-          </button>
           <button type="button" class="ghost-link" onclick="showRoleGate()">Đổi vai trò</button>
+          <button type="button" id="aiKeyDot" class="key-dot" onclick="openApiKeyModal()" title="Trạng thái kết nối hệ thống (Dành cho Quản trị viên - Phím tắt Alt+K)" aria-label="Trạng thái kết nối AI"></button>
         </div>
       </div>
     </header>
@@ -1624,9 +1631,8 @@
               <!-- Lỗi kết nối / Khóa API -->
               <div id="stuAiError" class="tab-pane hidden">
                 <div class="error-banner">
-                  <div style="font-weight: 700; margin-bottom: 6px;">Chưa thể tải phản hồi từ Gemini AI</div>
-                  <div id="stuAiErrorMsg" style="margin-bottom: 12px;"></div>
-                  <button type="button" class="btn-secondary" onclick="openApiKeyModal()">Cập nhật API Key mới</button>
+                  <div style="font-weight: 700; margin-bottom: 6px;">Chưa thể tải phản hồi từ hệ thống AI</div>
+                  <div id="stuAiErrorMsg"></div>
                 </div>
               </div>
 
@@ -1842,8 +1848,7 @@
 
                 <div id="clsAiError" class="hidden" style="margin-top: 14px;">
                   <div class="error-banner">
-                    <div id="clsAiErrorMsg" style="margin-bottom: 8px;"></div>
-                    <button type="button" class="btn-secondary" onclick="openApiKeyModal()">Cấu hình API Key</button>
+                    <div id="clsAiErrorMsg"></div>
                   </div>
                 </div>
 
@@ -2116,42 +2121,49 @@
     </div>
   </div>
 
-  <!-- MODAL CẤU HÌNH GEMINI API KEY AN TOÀN -->
+  <!-- MODAL QUẢN TRỊ KHÓA GEMINI API KEY (CHỈ DÀNH CHO QUẢN TRỊ VIÊN) -->
   <div id="apiKeyModal" class="modal-backdrop hidden" onclick="if(event.target === this) closeApiKeyModal()">
     <div class="modal-card">
       <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
         <div>
-          <h3 style="font-size: 17px; font-weight: 700;">Cấu hình khóa Gemini AI cho toàn hệ thống</h3>
-          <p style="font-size: 13px; color: var(--text-muted); margin-top: 3px;">Áp dụng chung cho mọi người truy cập web — Cập nhật tức thời không cần deploy lại.</p>
+          <h3 style="font-size: 17px; font-weight: 700;">Quản trị Khóa AI Hệ thống (Admin Only)</h3>
+          <p style="font-size: 13px; color: var(--text-muted); margin-top: 3px;">Yêu cầu xác thực Quản trị viên — Cập nhật tức thời cho toàn máy chủ không cần deploy lại.</p>
         </div>
         <button type="button" class="ghost-link" onclick="closeApiKeyModal()">Đóng</button>
       </div>
 
-      <div style="background: var(--primary-soft); border: 1px solid var(--primary-border); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 12.5px; color: var(--text-secondary); margin-bottom: 16px; line-height: 1.55;">
-        <strong>Cơ chế hoạt động thông minh:</strong>
-        <ul style="margin-top: 6px; padding-left: 18px;">
-          <li>Khóa nhập tại đây (hoặc trong <code>GEMINI_API_KEY</code> trên Render) được lưu trên <strong>Máy chủ</strong>: <strong>mọi người khác vào web đều dùng được ngay</strong> mà không phải nhập gì.</li>
-          <li>Nếu khóa bị lỗi khi đã deploy, chỉ cần dán khóa mới vào đây là đổi xong trong 1 giây, <strong>không cần sửa code hay deploy lại</strong>.</li>
-          <li>Hỗ trợ dán <strong>nhiều khóa dự phòng</strong> (cách nhau bằng dấu phẩy <code>,</code>) tại <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="color: var(--primary); font-weight: 600;">aistudio.google.com/apikey</a> để tự động chuyển đổi.</li>
-        </ul>
+      <div style="background: var(--primary-soft); border: 1px solid var(--primary-border); border-radius: var(--radius-sm); padding: 11px 14px; font-size: 12.5px; color: var(--text-secondary); margin-bottom: 14px; line-height: 1.55;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+          <strong>Trạng thái khóa máy chủ hiện tại:</strong>
+          <span id="serverKeyMaskedBadge" style="font-weight: 700; color: var(--success);">Đang kiểm tra...</span>
+        </div>
+        <div>Chỉ người có <strong>Mã PIN Quản trị viên</strong> mới có thể thay đổi khóa API. Khi cập nhật, khóa mới có hiệu lực ngay lập tức cho mọi người dùng mà không cần chỉnh code hay deploy lại.</div>
       </div>
 
       <div class="field">
-        <label class="field-label" for="apiKeyInput">Google Gemini API Key (1 hoặc nhiều khóa AQ... cách nhau dấu phẩy)</label>
-        <input type="text" id="apiKeyInput" placeholder="VD: AQ.Ab8RN6..., AQ.Ab8RN7...">
+        <label class="field-label" for="adminPinInput">Mã xác thực Quản trị viên (Admin PIN)</label>
+        <input type="password" id="adminPinInput" placeholder="Nhập mã PIN quản trị để mở quyền cập nhật...">
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="apiKeyInput">Google Gemini API Key mới (Hỗ trợ 1 hoặc nhiều khóa cách nhau dấu phẩy)</label>
+        <input type="password" id="apiKeyInput" placeholder="Dán khóa AQ... hoặc AIza... mới vào đây">
       </div>
 
       <div id="apiKeyStatusMsg" class="hidden" style="font-size: 13px; margin-bottom: 14px; padding: 10px 12px; border-radius: 8px;"></div>
 
       <div style="display: flex; gap: 8px; justify-content: flex-end;">
-        <button type="button" class="btn-secondary" onclick="clearSavedApiKey()">Xóa bộ nhớ trình duyệt</button>
-        <button type="button" class="btn-primary" style="width: auto;" id="saveApiKeyBtn" onclick="saveAndVerifyApiKey()">Xác thực & Kích hoạt cho toàn máy chủ</button>
+        <button type="button" class="btn-secondary" onclick="closeApiKeyModal()">Hủy</button>
+        <button type="button" class="btn-primary" style="width: auto;" id="saveApiKeyBtn" onclick="saveAndVerifyApiKey()">Xác thực PIN &amp; Cập nhật máy chủ</button>
       </div>
     </div>
   </div>
 
   <script>
     const STORAGE_KEY_NAME = 'edupredict_gemini_api_key';
+    // Xóa các khóa cũ từng lưu nhầm trong trình duyệt để luôn ưu tiên khóa chuẩn trên máy chủ
+    localStorage.removeItem(STORAGE_KEY_NAME);
+
     let classStudentsData = [];
     let currentClassOverview = null;
     let currentClassFilter = 'all';
@@ -2162,83 +2174,101 @@
     let stuAiState = 'idle'; // 'idle' | 'loading' | 'ready' | 'error'
 
     function getClientApiKey() {
-      return (localStorage.getItem(STORAGE_KEY_NAME) || '').trim();
+      return '';
     }
 
     async function refreshKeyBadgeStatus() {
       const dot = document.getElementById('aiKeyDot');
-      const lbl = document.getElementById('aiKeyBtnLabel');
-      const localKey = getClientApiKey();
-      if (localKey) {
-        dot.classList.add('ready');
-        lbl.textContent = 'AI Sẵn sàng';
-        return;
-      }
+      const badge = document.getElementById('serverKeyMaskedBadge');
       try {
         const res = await fetch('/api/key-status');
         const d = await res.json();
         if (d && d.configured) {
-          dot.classList.add('ready');
-          lbl.textContent = 'AI Sẵn sàng';
+          if (dot) {
+            dot.classList.add('ready');
+            dot.title = 'Hệ thống AI đang hoạt động (' + (d.masked || 'Đã kích hoạt') + ')';
+          }
+          if (badge) {
+            badge.textContent = 'Đang hoạt động (' + (d.masked || 'Đã cấu hình') + ')';
+            badge.style.color = 'var(--success)';
+          }
         } else {
-          dot.classList.remove('ready');
-          lbl.textContent = 'Cấu hình AI';
+          if (dot) {
+            dot.classList.remove('ready');
+            dot.title = 'Chưa cấu hình khóa AI (Nhấn để mở quyền Quản trị)';
+          }
+          if (badge) {
+            badge.textContent = 'Chưa cấu hình';
+            badge.style.color = 'var(--warn)';
+          }
         }
       } catch (_) {
-        dot.classList.remove('ready');
+        if (dot) dot.classList.remove('ready');
       }
     }
 
     refreshKeyBadgeStatus();
 
+    // Phím tắt Alt + K dành riêng cho Quản trị viên để mở nhanh hộp thoại đổi API Key ở bất kỳ màn hình nào
+    document.addEventListener('keydown', (e) => {
+      if (e.altKey && (e.key === 'k' || e.key === 'K')) {
+        e.preventDefault();
+        openApiKeyModal();
+      }
+    });
+
     function openApiKeyModal() {
-      const saved = getClientApiKey();
-      document.getElementById('apiKeyInput').value = saved;
+      refreshKeyBadgeStatus();
+      document.getElementById('adminPinInput').value = '';
+      document.getElementById('apiKeyInput').value = '';
       document.getElementById('apiKeyStatusMsg').classList.add('hidden');
       document.getElementById('apiKeyModal').classList.remove('hidden');
+      setTimeout(() => document.getElementById('adminPinInput').focus(), 60);
     }
 
     function closeApiKeyModal() {
       document.getElementById('apiKeyModal').classList.add('hidden');
     }
 
-    function clearSavedApiKey() {
-      localStorage.removeItem(STORAGE_KEY_NAME);
-      document.getElementById('apiKeyInput').value = '';
-      refreshKeyBadgeStatus();
-      const msg = document.getElementById('apiKeyStatusMsg');
-      msg.style.background = 'var(--surface-subtle)';
-      msg.style.color = 'var(--text-secondary)';
-      msg.textContent = 'Đã xóa khóa lưu trên trình duyệt.';
-      msg.classList.remove('hidden');
-    }
-
     async function saveAndVerifyApiKey() {
+      const pin = document.getElementById('adminPinInput').value.trim();
       const val = document.getElementById('apiKeyInput').value.trim();
       const btn = document.getElementById('saveApiKeyBtn');
       const msg = document.getElementById('apiKeyStatusMsg');
 
+      if (!pin) {
+        msg.style.background = 'var(--danger-bg)';
+        msg.style.color = 'var(--danger)';
+        msg.textContent = 'Vui lòng nhập Mã xác thực Quản trị viên (Admin PIN).';
+        msg.classList.remove('hidden');
+        document.getElementById('adminPinInput').focus();
+        return;
+      }
+
       if (!val) {
-        alert('Vui lòng dán khóa API từ Google AI Studio.');
+        msg.style.background = 'var(--danger-bg)';
+        msg.style.color = 'var(--danger)';
+        msg.textContent = 'Vui lòng dán khóa API mới cần cập nhật.';
+        msg.classList.remove('hidden');
+        document.getElementById('apiKeyInput').focus();
         return;
       }
 
       btn.disabled = true;
-      btn.textContent = 'Đang kiểm tra kết nối...';
+      btn.textContent = 'Đang xác thực & kiểm tra kết nối...';
       msg.classList.add('hidden');
 
       try {
         const res = await fetch('/api/verify-key', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ api_key: val })
+          body: JSON.stringify({ admin_pin: pin, api_key: val })
         });
         const data = await res.json();
         if (!res.ok || data.status !== 'success') {
-          throw new Error(data.message || 'Khóa API không hợp lệ.');
+          throw new Error(data.message || 'Xác thực hoặc khóa API không hợp lệ.');
         }
 
-        localStorage.setItem(STORAGE_KEY_NAME, val);
         await refreshKeyBadgeStatus();
         msg.style.background = 'var(--success-bg)';
         msg.style.color = 'var(--success)';
@@ -2252,7 +2282,7 @@
         msg.classList.remove('hidden');
       } finally {
         btn.disabled = false;
-        btn.textContent = 'Xác thực & Kích hoạt cho toàn máy chủ';
+        btn.textContent = 'Xác thực PIN & Cập nhật máy chủ';
       }
     }
 

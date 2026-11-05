@@ -224,6 +224,7 @@ class GeminiClassConsultInput(BaseModel):
 
 class ApiKeyInput(BaseModel):
     api_key: str
+    admin_pin: str = ""
 
 
 class BatchStudentItem(BaseModel):
@@ -417,18 +418,15 @@ def call_gemini_api(prompt: str, custom_key: Optional[str] = None) -> Tuple[Opti
 
 def gemini_error_message(reason: Optional[str]) -> str:
     if reason == "missing_key":
-        return (
-            "Chưa cấu hình Gemini API Key. Hãy nhấn nút 'Cấu hình AI' ở thanh trên cùng để dán API Key mới "
-            "(hoặc đặt biến môi trường GEMINI_API_KEY trên Render / tệp .env)."
-        )
+        return "Hệ thống AI hiện đang bảo trì khóa kết nối máy chủ. Vui lòng liên hệ Quản trị viên để kích hoạt."
     if reason == "invalid_key":
         return (
-            "API Key hiện tại không hợp lệ hoặc đã bị Google tự động khóa do từng đẩy công khai lên GitHub. "
-            "Bạn hãy tạo khóa mới tại Google AI Studio (aistudio.google.com/apikey) rồi nhấn 'Cấu hình AI' ở góc phải phía trên để cập nhật."
+            "Khóa kết nối AI trên máy chủ hiện không hợp lệ hoặc cần làm mới. "
+            "Quản trị viên có thể nhấn vào chấm trạng thái trên thanh điều hướng (hoặc phím tắt Alt + K) để cập nhật tức thời."
         )
     if reason == "quota_exceeded":
-        return "API Key hiện tại đang vượt giới hạn tần suất gọi miễn phí (Rate Limit 429). Vui lòng đợi khoảng 30 giây rồi thử lại."
-    return "Không thể kết nối tới dịch vụ Gemini lúc này. Vui lòng kiểm tra kết nối mạng hoặc khóa API trong mục 'Cấu hình AI'."
+        return "Hệ thống AI đang xử lý lưu lượng cao (Rate Limit 429). Vui lòng đợi khoảng 20–30 giây rồi thử lại."
+    return "Không thể kết nối tới dịch vụ phân tích AI lúc này. Vui lòng kiểm tra kết nối mạng và thử lại."
 
 
 @app.get("/health")
@@ -453,6 +451,17 @@ def key_status() -> Dict[str, Any]:
 
 @app.post("/api/verify-key")
 def verify_and_save_key(payload: ApiKeyInput, request: Request) -> JSONResponse:
+    expected_pin = os.environ.get("EDUPREDICT_ADMIN_PIN", "haui2026").strip()
+    provided_pin = (payload.admin_pin or "").strip()
+    if provided_pin != expected_pin:
+        return JSONResponse(
+            status_code=403,
+            content={
+                "status": "error",
+                "message": "Mã xác thực Quản trị viên (Admin PIN) không chính xác! Chỉ người quản trị mới có quyền thay đổi khóa API hệ thống.",
+            },
+        )
+
     candidates = parse_key_list(payload.api_key)
     if not candidates:
         return JSONResponse(status_code=400, content={"status": "error", "message": "Khóa API không đúng định dạng."})
@@ -471,7 +480,10 @@ def verify_and_save_key(payload: ApiKeyInput, request: Request) -> JSONResponse:
     saved_server = False
     try:
         os.environ["GEMINI_API_KEY"] = joined_candidates
-        ENV_FILE_PATH.write_text(f"GEMINI_API_KEY={joined_candidates}\n", encoding="utf-8")
+        ENV_FILE_PATH.write_text(
+            f"GEMINI_API_KEY={joined_candidates}\nEDUPREDICT_ADMIN_PIN={expected_pin}\n",
+            encoding="utf-8",
+        )
         saved_server = True
     except Exception as exc:
         os.environ["GEMINI_API_KEY"] = joined_candidates
@@ -483,7 +495,7 @@ def verify_and_save_key(payload: ApiKeyInput, request: Request) -> JSONResponse:
             "saved_to_server": saved_server,
             "key_count": len(candidates),
             "masked": f"{candidates[0][:6]}...{candidates[0][-4:]}",
-            "message": f"Đã kích hoạt thành công {len(candidates)} khóa API cho toàn bộ máy chủ! Mọi người truy cập đều dùng được ngay mà không cần nhập lại.",
+            "message": f"Xác thực Quản trị viên thành công! Đã kích hoạt {len(candidates)} khóa API cho toàn bộ máy chủ.",
         }
     )
 
