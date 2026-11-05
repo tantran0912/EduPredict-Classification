@@ -1,0 +1,6 @@
+.env
+.env.local
+__pycache__/
+*.py[cod]
+ui-dashboard/node_modules/
+ui-dashboard/.next/
