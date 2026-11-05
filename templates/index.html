@@ -4,9 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>EduPredict — Phân tích Học tập & Cảnh báo Sớm Học vụ</title>
+  <link rel="icon" type="image/jpeg" href="/logo.jpg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
   <style>
     :root {
       --bg: #F3F7FC;
@@ -286,15 +290,47 @@
     }
 
     .brand-mark {
-      width: 34px;
-      height: 34px;
+      width: 38px;
+      height: 38px;
       border-radius: 9px;
-      background: linear-gradient(135deg, var(--primary) 0%, #2563EB 100%);
-      color: #fff;
+      background: #ffffff;
+      border: 1px solid var(--border);
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 2px 6px rgba(29, 78, 216, 0.25);
+      overflow: hidden;
+      box-shadow: 0 2px 6px rgba(15, 35, 68, 0.08);
+      flex-shrink: 0;
+    }
+
+    .brand-mark img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .gate-logo {
+      width: 64px;
+      height: 64px;
+      border-radius: 16px;
+      object-fit: cover;
+      margin: 0 auto 12px;
+      display: block;
+      background: #ffffff;
+      border: 1.5px solid var(--border);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .katex {
+      font-size: 1.04em !important;
+    }
+
+    .katex-display {
+      margin: 10px 0 !important;
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: 4px 0;
     }
 
     .brand-name {
@@ -1358,8 +1394,8 @@
   <section id="roleGateScreen" class="role-gate">
     <div class="gate-container">
       <div class="gate-top">
+        <img src="/logo.jpg" alt="EduPredict Logo" class="gate-logo">
         <div class="gate-badge">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
           Hệ thống Phân tích Học tập & Cảnh báo Sớm Học vụ
         </div>
         <h1>Bạn đang truy cập hệ thống với vai trò nào?</h1>
@@ -1424,7 +1460,7 @@
       <div class="topbar-inner">
         <button type="button" class="brand-btn" onclick="showRoleGate()" title="Quay lại màn hình chọn vai trò">
           <div class="brand-mark">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+            <img src="/logo.jpg" alt="EduPredict Logo">
           </div>
           <div>
             <span class="brand-name">EduPredict</span>
@@ -2177,6 +2213,70 @@
       return '';
     }
 
+    function renderAcademicText(el, rawText) {
+      if (!el) return;
+      let str = String(rawText || '');
+      if (!str) {
+        el.textContent = '';
+        return;
+      }
+
+      // 1) Khôi phục các ký tự điều khiển nếu chuỗi LaTeX từng bị ăn mất dấu gạch chéo
+      str = str
+        .replace(/\x0crac/g, '\\frac')
+        .replace(/\x0corall/g, '\\forall')
+        .replace(/\x08eta/g, '\\beta')
+        .replace(/\x08ar/g, '\\bar')
+        .replace(/\x08egin/g, '\\begin')
+        .replace(/\x08inom/g, '\\binom')
+        .replace(/\t(imes|heta|au|ext|o\b|an\b|riangle|ilde)/g, '\\t$1')
+        .replace(/\r(ightarrow|ight|ho\b)/g, '\\r$1');
+
+      // 2) Nếu có lệnh toán học LaTeX rời rạc chưa nằm trong cặp $...$, tự động bọc $...$
+      if (!str.includes('$') && !str.includes('\\(') && /\\(frac|sum|int|sqrt|lim|le|ge|neq|rightarrow|Rightarrow|alpha|beta|gamma|delta|theta|lambda|sigma|omega|partial|infty)/.test(str)) {
+        str = str.replace(/(\\(?:frac\{[^{}]+\}\{[^{}]+\}|sqrt\{[^{}]+\}|sum(?:_\{?[^{}\s]+\}?)?(?:\^\{?[^{}\s]+\}?)?|int(?:_\{?[^{}\s]+\}?)?(?:\^\{?[^{}\s]+\}?)?))/g, '$$$1$$');
+      }
+
+      // 3) Escape HTML an toàn và định dạng **in đậm** + xuống dòng
+      let safeHtml = str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+        .replace(/\n/g, '<br>');
+
+      el.innerHTML = safeHtml;
+
+      // 4) Render công thức toán học chuẩn bằng KaTeX (nếu đã nạp thư viện)
+      if (typeof window.renderMathInElement === 'function') {
+        try {
+          window.renderMathInElement(el, {
+            delimiters: [
+              { left: '$$', right: '$$', display: true },
+              { left: '\\[', right: '\\]', display: true },
+              { left: '$', right: '$', display: false },
+              { left: '\\(', right: '\\)', display: false }
+            ],
+            throwOnError: false,
+            strict: false
+          });
+        } catch (_) {}
+      } else {
+        // Fallback Unicode nếu mạng chậm chưa tải xong KaTeX
+        el.innerHTML = el.innerHTML
+          .replace(/\\le\b/g, '≤')
+          .replace(/\\ge\b/g, '≥')
+          .replace(/\\neq\b/g, '≠')
+          .replace(/\\(to|rightarrow)\b/g, '→')
+          .replace(/\\Rightarrow\b/g, '⇒')
+          .replace(/\\infty\b/g, '∞')
+          .replace(/\\times\b/g, '×')
+          .replace(/\\cdot\b/g, '·')
+          .replace(/\\pm\b/g, '±')
+          .replace(/\\approx\b/g, '≈');
+      }
+    }
+
     async function refreshKeyBadgeStatus() {
       const dot = document.getElementById('aiKeyDot');
       const badge = document.getElementById('serverKeyMaskedBadge');
@@ -2541,13 +2641,13 @@
         }
 
         const d = json.data;
-        document.getElementById('stuTopicTitle').textContent = d.topic_title || payload.struggling_subject;
-        document.getElementById('stuDirectExplanation').textContent = d.direct_explanation || '';
+        renderAcademicText(document.getElementById('stuTopicTitle'), d.topic_title || payload.struggling_subject);
+        renderAcademicText(document.getElementById('stuDirectExplanation'), d.direct_explanation || '');
 
         const tkList = document.getElementById('stuTakeawaysList');
         (d.key_takeaways || []).forEach(t => {
           const li = document.createElement('li');
-          li.textContent = t;
+          renderAcademicText(li, t);
           tkList.appendChild(li);
         });
 
@@ -2566,15 +2666,15 @@
             '</div>' +
             '<div class="roadmap-focus"></div>' +
             '<div class="roadmap-action"></div>';
-          div.querySelector('.roadmap-stage').textContent = step.stage || '';
+          renderAcademicText(div.querySelector('.roadmap-stage'), step.stage || '');
           div.querySelector('.roadmap-duration').textContent = step.duration || '';
-          div.querySelector('.roadmap-focus').textContent = step.focus || '';
-          div.querySelector('.roadmap-action').textContent = step.action || '';
+          renderAcademicText(div.querySelector('.roadmap-focus'), step.focus || '');
+          renderAcademicText(div.querySelector('.roadmap-action'), step.action || '');
           roadWrap.appendChild(div);
         });
 
         if (d.study_method_tip) {
-          tipEl.textContent = 'Phương pháp học gợi ý: ' + d.study_method_tip;
+          renderAcademicText(tipEl, '**Phương pháp học gợi ý:** ' + d.study_method_tip);
           tipEl.classList.remove('hidden');
         }
 
@@ -2870,8 +2970,8 @@
         }
 
         const d = json.data;
-        document.getElementById('clsAiTitle').textContent = d.strategy_title || 'Kế hoạch can thiệp sư phạm';
-        document.getElementById('clsAiInsight').textContent = d.pedagogical_insight || '';
+        renderAcademicText(document.getElementById('clsAiTitle'), d.strategy_title || 'Kế hoạch can thiệp sư phạm');
+        renderAcademicText(document.getElementById('clsAiInsight'), d.pedagogical_insight || '');
         const stepsWrap = document.getElementById('clsAiPlanSteps');
         stepsWrap.innerHTML = '';
         (d.action_plan || []).forEach(p => {
@@ -2880,8 +2980,8 @@
           card.innerHTML =
             '<div class="roadmap-stage" style="margin-bottom: 4px;"></div>' +
             '<div class="roadmap-action" style="color: var(--text-secondary);"></div>';
-          card.querySelector('.roadmap-stage').textContent = p.phase || '';
-          card.querySelector('.roadmap-action').textContent = p.action || '';
+          renderAcademicText(card.querySelector('.roadmap-stage'), p.phase || '');
+          renderAcademicText(card.querySelector('.roadmap-action'), p.action || '');
           stepsWrap.appendChild(card);
         });
         resBox.classList.remove('hidden');
@@ -3035,8 +3135,8 @@
           throw new Error(json.message || 'Lỗi kết nối AI');
         }
         const d = json.data;
-        document.getElementById('drwAiTitle').textContent = d.topic_title || st.struggling_subject;
-        document.getElementById('drwAiExplain').textContent = d.direct_explanation || '';
+        renderAcademicText(document.getElementById('drwAiTitle'), d.topic_title || st.struggling_subject);
+        renderAcademicText(document.getElementById('drwAiExplain'), d.direct_explanation || '');
 
         const stepsEl = document.getElementById('drwAiSteps');
         stepsEl.innerHTML = '';
@@ -3047,10 +3147,10 @@
             '<div class="roadmap-step-top"><span class="roadmap-stage"></span><span class="roadmap-duration"></span></div>' +
             '<div class="roadmap-focus"></div>' +
             '<div class="roadmap-action"></div>';
-          item.querySelector('.roadmap-stage').textContent = step.stage || '';
+          renderAcademicText(item.querySelector('.roadmap-stage'), step.stage || '');
           item.querySelector('.roadmap-duration').textContent = step.duration || '';
-          item.querySelector('.roadmap-focus').textContent = step.focus || '';
-          item.querySelector('.roadmap-action').textContent = step.action || '';
+          renderAcademicText(item.querySelector('.roadmap-focus'), step.focus || '');
+          renderAcademicText(item.querySelector('.roadmap-action'), step.action || '');
           stepsEl.appendChild(item);
         });
         box.classList.remove('hidden');
@@ -3181,8 +3281,8 @@
           document.getElementById('facAiLoading').classList.add('hidden');
           if (aiRes.ok && aiJson.status === 'success' && aiJson.data) {
             const d = aiJson.data;
-            document.getElementById('facAiTopic').textContent = d.topic_title || subject;
-            document.getElementById('facAiSummary').textContent = d.direct_explanation || '';
+            renderAcademicText(document.getElementById('facAiTopic'), d.topic_title || subject);
+            renderAcademicText(document.getElementById('facAiSummary'), d.direct_explanation || '');
             const rList = document.getElementById('facAiRoadmap');
             rList.innerHTML = '';
             (d.course_roadmap || []).forEach(st => {
@@ -3192,10 +3292,10 @@
                 '<div class="roadmap-step-top"><span class="roadmap-stage"></span><span class="roadmap-duration"></span></div>' +
                 '<div class="roadmap-focus"></div>' +
                 '<div class="roadmap-action"></div>';
-              stepDiv.querySelector('.roadmap-stage').textContent = st.stage || '';
+              renderAcademicText(stepDiv.querySelector('.roadmap-stage'), st.stage || '');
               stepDiv.querySelector('.roadmap-duration').textContent = st.duration || '';
-              stepDiv.querySelector('.roadmap-focus').textContent = st.focus || '';
-              stepDiv.querySelector('.roadmap-action').textContent = st.action || '';
+              renderAcademicText(stepDiv.querySelector('.roadmap-focus'), st.focus || '');
+              renderAcademicText(stepDiv.querySelector('.roadmap-action'), st.action || '');
               rList.appendChild(stepDiv);
             });
             document.getElementById('facAiContent').classList.remove('hidden');

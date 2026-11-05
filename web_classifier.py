@@ -43,6 +43,7 @@ if not SCHEMA_PATH.exists():
 METRICS_PATH = ARTIFACT_DIR / "classification_metrics.json"
 SAMPLE_CSV_PATH = BASE_DIR / "danh_sach_lop_mau_HaUI.csv"
 TEMPLATE_PATH = BASE_DIR / "templates" / "index.html"
+LOGO_PATH = BASE_DIR / "logo.jpg"
 ENV_FILE_PATH = BASE_DIR / ".env"
 
 
@@ -504,6 +505,13 @@ def verify_and_save_key(payload: ApiKeyInput, request: Request) -> JSONResponse:
             "message": f"Xác thực Quản trị viên thành công! Đã kích hoạt {len(candidates)} khóa API cho toàn bộ máy chủ.",
         }
     )
+
+
+@app.get("/logo.jpg")
+def serve_logo():
+    if LOGO_PATH.exists():
+        return FileResponse(LOGO_PATH, media_type="image/jpeg")
+    return JSONResponse(status_code=404, content={"message": "Không tìm thấy logo."})
 
 
 @app.get("/api/download-sample-csv")
@@ -1045,6 +1053,76 @@ def simulate_hours(payload: SimulateInput) -> JSONResponse:
     )
 
 
+def _repair_latex_string(s: str) -> str:
+    """Khôi phục các lệnh LaTeX bị trình parse JSON hiểu nhầm thành ký tự điều khiển (\f, \b, \t, \r, \n)."""
+    if not isinstance(s, str):
+        return s
+    # \f (Form feed \x0c) trong \frac, \forall
+    s = s.replace("\x0crac", "\\frac").replace("\x0corall", "\\forall")
+    # \b (Backspace \x08) trong \beta, \bar, \begin, \binom, \big, \bmatrix
+    s = (
+        s.replace("\x08eta", "\\beta")
+        .replace("\x08ar", "\\bar")
+        .replace("\x08egin", "\\begin")
+        .replace("\x08inom", "\\binom")
+        .replace("\x08ig", "\\big")
+        .replace("\x08matrix", "\\bmatrix")
+    )
+    # \t (Tab \x09) trong \times, \theta, \tau, \text, \to, \tan, \triangle, \tilde
+    s = re.sub(r"\t(imes|heta|au|ext|o\b|an\b|riangle|ilde)", r"\\t\1", s)
+    # \r (Carriage return) trong \rightarrow, \Rightarrow, \right, \rho
+    s = re.sub(r"\r(ightarrow|ight|ho\b)", r"\\r\1", s)
+    return s
+
+
+def _repair_latex_in_obj(obj: Any) -> Any:
+    if isinstance(obj, str):
+        return _repair_latex_string(obj)
+    if isinstance(obj, list):
+        return [_repair_latex_in_obj(item) for item in obj]
+    if isinstance(obj, dict):
+        return {k: _repair_latex_in_obj(v) for k, v in obj.items()}
+    return obj
+
+
+def parse_gemini_json_safely(raw_text: str) -> Optional[Dict[str, Any]]:
+    """
+    Parse JSON từ Gemini an toàn với mọi công thức toán học LaTeX:
+    - Bảo vệ các lệnh bắt đầu bằng \\f, \\b, \\t, \\r, \\n (như \\frac, \\beta, \\theta, \\to, \\times, \\rightarrow, \\nabla, \\neq)
+      để json.loads không biến chúng thành ký tự điều khiển.
+    - Tự động nhân đôi dấu gạch chéo ngược (\\) trước các lệnh toán học LaTeX phổ biến (\\sum, \\int, \\le, \\ge, \\sqrt, \\partial...)
+      tránh lỗi Invalid \\escape.
+    """
+    if not raw_text:
+        return None
+    cleaned = raw_text.strip()
+    cleaned = re.sub(r"^```(?:json)?\s*", "", cleaned)
+    cleaned = re.sub(r"\s*```$", "", cleaned).strip()
+
+    def _protect_latex_escapes(txt: str) -> str:
+        # 1) Bảo vệ các lệnh LaTeX trùng ký tự thoát JSON (\f, \b, \t, \r, \n) khi chỉ có 1 dấu \
+        txt = re.sub(
+            r"(?<!\\)\\(frac|forall|beta|bar|begin|binom|big|bmatrix|times|theta|tau|text|to\b|tan\b|triangle|tilde|rightarrow|Rightarrow|right|rho|nabla|neq|nu\b|notin)",
+            r"\\\\\1",
+            txt,
+        )
+        # 2) Bảo vệ mọi dấu \ đơn lẻ không phải chuỗi thoát JSON hợp lệ (\", \\, \/, \b, \f, \n, \r, \t, \uXXXX)
+        txt = re.sub(r'(?<!\\)\\(?![/\"\\bfnrt]|u[0-9a-fA-F]{4})', r"\\\\", txt)
+        return txt
+
+    for candidate in (cleaned, re.search(r"\{[\s\S]*\}", cleaned).group(0) if re.search(r"\{[\s\S]*\}", cleaned) else ""):
+        if not candidate:
+            continue
+        protected = _protect_latex_escapes(candidate)
+        for attempt in (protected, candidate):
+            try:
+                parsed = json.loads(attempt)
+                return _repair_latex_in_obj(parsed)
+            except Exception:
+                continue
+    return None
+
+
 @app.post("/api/gemini-consult")
 def gemini_consult(payload: GeminiConsultInput) -> JSONResponse:
     subject = payload.struggling_subject.strip()
@@ -1093,14 +1171,15 @@ THÔNG TIN ĐẦU VÀO CỦA SINH VIÊN:
 
 YÊU CẦU BẮT BUỘC:
 1. Đi thẳng vào kiến thức chuyên môn chính xác của môn "{subject_display}" và vấn đề "{question_display}". Tuyệt đối KHÔNG trả lời chung chung sáo rỗng, KHÔNG dùng văn mẫu có sẵn. Dù sinh viên hỏi bất kỳ môn toán, tối ưu/quy hoạch tuyến tính, kỹ thuật, CNTT, kinh tế, ngoại ngữ hay lý luận chính trị nào, phải giải thích chuẩn xác bản chất lý thuyết/công thức/quy tắc biến đổi của đúng chủ đề đó.
-2. Lộ trình học phần ("course_roadmap") phải được chia thành 3 hoặc 4 chặng rõ ràng, bám sát nội dung thực tế của học phần "{subject_display}", phân bổ thời lượng hợp lý với quỹ thời gian {payload.hours_studied:.1f} giờ/tuần và giai đoạn "{phase_text}".
+2. QUY TẮC ĐỊNH DẠNG CÔNG THỨC TOÁN HỌC: Mọi biểu thức, ký hiệu, phương trình, tích phân, ma trận hay bất đẳng thức toán học PHẢI được bọc trong cặp dấu `$...$` cho công thức cùng dòng (ví dụ: `$\\max Z = c^T x$`, `$A^T y \\ge c$`, `$\\frac{{a}}{{b}}$`, `$\\int_a^b f(x)\\,dx$`) hoặc `$$...$$` cho công thức riêng dòng, và nhớ dùng 2 dấu gạch chéo ngược `\\\\` cho các lệnh LaTeX bên trong chuỗi JSON.
+3. Lộ trình học phần ("course_roadmap") phải được chia thành 3 hoặc 4 chặng rõ ràng, bám sát nội dung thực tế của học phần "{subject_display}", phân bổ thời lượng hợp lý với quỹ thời gian {payload.hours_studied:.1f} giờ/tuần và giai đoạn "{phase_text}".
 
 TRẢ VỀ DUY NHẤT 1 JSON HỢP LỆ THEO ĐÚNG CẤU TRÚC SAU:
 {{
   "topic_title": "Tên chuẩn xác của chủ đề lý thuyết và học phần",
-  "direct_explanation": "Giải thích trực diện, rõ ràng, chuẩn lý thuyết chuyên ngành về vấn đề sinh viên hỏi (nêu rõ bản chất, định nghĩa, công thức hoặc quy tắc chuyển đổi cốt lõi dễ hiểu nhất trong 4-6 câu).",
+  "direct_explanation": "Giải thích trực diện, rõ ràng, chuẩn lý thuyết chuyên ngành về vấn đề sinh viên hỏi (nêu rõ bản chất, định nghĩa, công thức toán bọc trong $...$ hoặc quy tắc chuyển đổi cốt lõi dễ hiểu nhất trong 4-6 câu).",
   "key_takeaways": [
-    "Ý trọng tâm 1: Công thức / nguyên lý cốt lõi hoặc cách phân biệt khái niệm dễ nhầm",
+    "Ý trọng tâm 1: Công thức / nguyên lý cốt lõi (bọc công thức trong $...$) hoặc cách phân biệt khái niệm dễ nhầm",
     "Ý trọng tâm 2: Quy tắc áp dụng từng bước khi giải bài tập hoặc thực hành",
     "Ý trọng tâm 3: Sai lầm / bẫy đề thi phổ biến nhất ở phần này cần tránh"
   ],
@@ -1130,21 +1209,10 @@ TRẢ VỀ DUY NHẤT 1 JSON HỢP LỆ THEO ĐÚNG CẤU TRÚC SAU:
 
     ai_raw, err_reason = call_gemini_api(prompt, custom_key=payload.api_key)
     if ai_raw:
-        try:
-            cleaned = ai_raw.strip()
-            cleaned = re.sub(r"^```(?:json)?\s*", "", cleaned)
-            cleaned = re.sub(r"\s*```$", "", cleaned)
-            res_json = json.loads(cleaned.strip())
+        res_json = parse_gemini_json_safely(ai_raw)
+        if res_json is not None:
             return JSONResponse(content={"status": "success", "data": res_json, "source": "gemini_live"})
-        except Exception as exc:
-            logger.warning(f"Lỗi parse JSON Gemini: {exc}")
-            match = re.search(r"\{[\s\S]*\}", ai_raw)
-            if match:
-                try:
-                    res_json = json.loads(match.group(0))
-                    return JSONResponse(content={"status": "success", "data": res_json, "source": "gemini_live"})
-                except Exception:
-                    pass
+        logger.warning(f"Lỗi parse JSON Gemini: {ai_raw[:250]}")
 
     return JSONResponse(
         status_code=502,
@@ -1191,18 +1259,9 @@ TRẢ VỀ DUY NHẤT 1 JSON HỢP LỆ THEO CẤU TRÚC SAU:
 
     ai_raw, err_reason = call_gemini_api(prompt, custom_key=payload.api_key)
     if ai_raw:
-        try:
-            cleaned = re.sub(r"^```(?:json)?\s*", "", ai_raw.strip())
-            cleaned = re.sub(r"\s*```$", "", cleaned)
-            res_json = json.loads(cleaned.strip())
+        res_json = parse_gemini_json_safely(ai_raw)
+        if res_json is not None:
             return JSONResponse(content={"status": "success", "data": res_json})
-        except Exception:
-            match = re.search(r"\{[\s\S]*\}", ai_raw)
-            if match:
-                try:
-                    return JSONResponse(content={"status": "success", "data": json.loads(match.group(0))})
-                except Exception:
-                    pass
 
     return JSONResponse(
         status_code=502,
